@@ -622,6 +622,39 @@ namespace FirmaXadesNet
             _document = null;
         }
 
+        /// <summary>
+        /// Añade una transformación XPath al contenido a firmar
+        /// </summary>
+        /// <param name="XPathString"></param>
+        public void AddXPathTransform(string XPathString)
+        {
+            XmlDocument document;
+            
+            if (_xadesSignedXml == null)
+            {
+                throw new NullReferenceException("No se ha establecido el contenido a firmar");
+            }
+
+            if (_document != null)
+            {
+                document = _document;
+            }
+            else
+            {
+                document = new XmlDocument();
+            }
+            
+            XmlElement xPathElem = document.CreateElement("XPath");
+            xPathElem.InnerText = XPathString;
+
+            XmlDsigXPathTransform transform = new XmlDsigXPathTransform();
+            transform.LoadInnerXml(xPathElem.SelectNodes("."));
+
+            Reference reference = _xadesSignedXml.SignedInfo.References[0] as Reference;
+
+            reference.AddTransform(transform);
+        }
+
 
         #region Métodos de firma
 
