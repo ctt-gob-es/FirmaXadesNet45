@@ -2958,7 +2958,7 @@
             This class contains timestamp information
             </summary>
         </member>
-        <member name="M:Microsoft.Xades.TimeStamp.#ctor">
+        <member name="M:Microsoft.Xades.TimeStamp.#ctor(System.String,System.String)">
             <summary>
             Default constructor
             </summary>
@@ -2968,6 +2968,14 @@
             Constructor with TagName
             </summary>
             <param name="tagName">Name of the tag when serializing with GetXml</param>
+        </member>
+        <member name="M:Microsoft.Xades.TimeStamp.#ctor(System.String,System.String,System.String)">
+            <summary>
+            Constructor with TagName and prefix
+            </summary>
+            <param name="tagName"></param>
+            <param name="prefix"></param>
+            <param name="namespaceUri"></param>
         </member>
         <member name="M:Microsoft.Xades.TimeStamp.HasChanged">
             <summary>
@@ -3518,6 +3526,11 @@
         <member name="F:Microsoft.Xades.XadesSignedXml.XadesNamespaceUri">
             <summary>
             The XAdES XML namespace URI
+            </summary>
+        </member>
+        <member name="F:Microsoft.Xades.XadesSignedXml.XadesNamespace141Uri">
+            <summary>
+            The XAdES v1.4.1 XML namespace URI
             </summary>
         </member>
         <member name="F:Microsoft.Xades.XadesSignedXml.SignedPropertiesType">

@@ -153,6 +153,11 @@ namespace Microsoft.Xades
         public const string XadesNamespaceUri = "http://uri.etsi.org/01903/v1.3.2#";
 
         /// <summary>
+        /// The XAdES v1.4.1 XML namespace URI
+        /// </summary>
+        public const string XadesNamespace141Uri = "http://uri.etsi.org/01903/v1.4.1#";
+
+        /// <summary>
         /// Mandated type name for the Uri reference to the SignedProperties element
         /// </summary>
         public const string SignedPropertiesType = "http://uri.etsi.org/01903/v1.3.2#SignedProperties";

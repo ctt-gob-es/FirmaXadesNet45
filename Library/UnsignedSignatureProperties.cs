@@ -310,6 +310,7 @@ namespace Microsoft.Xades
 
 			xmlNamespaceManager = new XmlNamespaceManager(xmlElement.OwnerDocument.NameTable);
 			xmlNamespaceManager.AddNamespace("xades", XadesSignedXml.XadesNamespaceUri);
+            xmlNamespaceManager.AddNamespace("xadesv141", XadesSignedXml.XadesNamespace141Uri);
 
 			this.counterSignatureCollection.Clear();
             xmlNodeList = xmlElement.SelectNodes("xades:CounterSignature", xmlNamespaceManager);
@@ -495,7 +496,10 @@ namespace Microsoft.Xades
 
 			this.archiveTimeStampCollection.Clear();
             xmlNodeList = xmlElement.SelectNodes("xades:ArchiveTimeStamp", xmlNamespaceManager);
-			enumerator = xmlNodeList.GetEnumerator();
+
+            xmlNodeList = xmlElement.SelectNodes("xadesv141:ArchiveTimeStamp", xmlNamespaceManager);
+
+            enumerator = xmlNodeList.GetEnumerator();
 			try 
 			{
 				while (enumerator.MoveNext()) 
@@ -517,6 +521,32 @@ namespace Microsoft.Xades
 					disposable.Dispose();
 				}
 			}
+
+            xmlNodeList = xmlElement.SelectNodes("xadesv141:ArchiveTimeStamp", xmlNamespaceManager);
+
+            enumerator = xmlNodeList.GetEnumerator();
+            try
+            {
+                while (enumerator.MoveNext())
+                {
+                    iterationXmlElement = enumerator.Current as XmlElement;
+                    if (iterationXmlElement != null)
+                    {
+                        newTimeStamp = new TimeStamp("ArchiveTimeStamp", "xadesv141", XadesSignedXml.XadesNamespace141Uri);
+                        newTimeStamp.LoadXml(iterationXmlElement);
+                        this.archiveTimeStampCollection.Add(newTimeStamp);
+                    }
+                }
+            }
+            finally
+            {
+                IDisposable disposable = enumerator as IDisposable;
+                if (disposable != null)
+                {
+                    disposable.Dispose();
+                }
+            }           
+
 		}
 
 		/// <summary>
