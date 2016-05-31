@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// XadesUpgrader.cs
+// IXadesUpgrader.cs
 //
 // FirmaXadesNet - Librería para la generación de firmas XADES
 // Copyright (C) 2016 Dpto. de Nuevas Tecnologías de la Dirección General de Urbanismo del Ayto. de Cartagena
@@ -21,6 +21,7 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
+using FirmaXadesNet.Parameters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,27 +30,8 @@ using System.Threading.Tasks;
 
 namespace FirmaXadesNet.Upgraders
 {
-    abstract class XadesUpgrader
+    interface IXadesUpgrader
     {
-        #region Private variables
-
-        protected FirmaXades _firma;
-
-        #endregion
-
-        #region Constructors
-
-        public XadesUpgrader(FirmaXades firma)
-        {
-            _firma = firma;
-        }
-
-        #endregion
-
-        #region Public methods
-
-        abstract public void Upgrade();
-
-        #endregion
+        void Upgrade(FirmaXades firma, UpgradeParameters parameters);        
     }
 }

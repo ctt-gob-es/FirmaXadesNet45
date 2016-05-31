@@ -31,6 +31,7 @@ using System.Text;
 using System.Windows.Forms;
 using FirmaXadesNet;
 using System.IO;
+using FirmaXadesNet.Parameters;
 
 namespace DemoFacturae
 {
@@ -44,15 +45,20 @@ namespace DemoFacturae
         private void btnGenerar_Click(object sender, EventArgs e)
         {
             FirmaXades firmaXades = new FirmaXades();
+            SignatureParameters parametros = new SignatureParameters();
+
             string ficheroFactura = Application.StartupPath + "\\Facturae.xml";
 
             firmaXades.SetContentEnveloped(ficheroFactura);
 
             // Política de firma de factura-e 3.1
-            firmaXades.PolicyIdentifier = "http://www.facturae.es/politica_de_firma_formato_facturae/politica_de_firma_formato_facturae_v3_1.pdf";
-            firmaXades.PolicyHash = "Ohixl6upD6av8N7pEvDABhEL6hM=";
+            parametros.SignaturePolicyInfo = new SignaturePolicyInfo();
+            parametros.SignaturePolicyInfo.PolicyIdentifier = "http://www.facturae.es/politica_de_firma_formato_facturae/politica_de_firma_formato_facturae_v3_1.pdf";
+            parametros.SignaturePolicyInfo.PolicyHash = "Ohixl6upD6av8N7pEvDABhEL6hM=";
 
-            firmaXades.Sign(firmaXades.SelectCertificate());
+            parametros.SigningCertificate = firmaXades.SelectCertificate();
+
+            firmaXades.Sign(parametros);
 
             if (saveFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {

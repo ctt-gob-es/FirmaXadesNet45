@@ -46,12 +46,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Crypto\DigestMethod.cs" />
+    <Compile Include="Crypto\SignatureMethod.cs" />
     <Compile Include="FirmaXades.cs" />
     <Compile Include="Clients\OcspClient.cs" />
+    <Compile Include="Parameters\SignatureDestination.cs" />
+    <Compile Include="Parameters\SignatureParameters.cs" />
+    <Compile Include="Parameters\SignaturePolicyInfo.cs" />
+    <Compile Include="Parameters\UpgradeParameters.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Clients\TimeStampClient.cs" />
     <Compile Include="Upgraders\XadesTUpgrader.cs" />
-    <Compile Include="Upgraders\XadesUpgrader.cs" />
+    <Compile Include="Upgraders\IXadesUpgrader.cs" />
     <Compile Include="Upgraders\XadesXLUpgrader.cs" />
     <Compile Include="Utils\CertUtil.cs" />
     <Compile Include="Utils\DigestUtil.cs" />

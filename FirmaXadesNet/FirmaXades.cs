@@ -48,29 +48,16 @@ using System.Reflection;
 using FirmaXadesNet.Clients;
 using FirmaXadesNet.Utils;
 using FirmaXadesNet.Upgraders;
+using FirmaXadesNet.Parameters;
 
 
 namespace FirmaXadesNet
 {
-    public enum DigestMethod
-    {
-        SHA1,
-        SHA256,
-        SHA512
-    }
-
-    public enum SignMethod
-    {
-        RSAwithSHA1,
-        RSAwithSHA256,
-        RSAwithSHA512
-    }
 
     public class FirmaXades : IDisposable
     {
 
         #region Private variables
-        private X509Certificate2 _signCertificate;
         private XadesSignedXml _xadesSignedXml;
         private XmlDocument _document;
         private RSACryptoServiceProvider _rsaKey;
@@ -78,174 +65,12 @@ namespace FirmaXadesNet
         private string _signatureId;
         private string _signatureValueId;
         private string _objectReference;
-        private string _policyId;
-        private string _policyUri;
-        private string _policyHash;
-        private string _tsaServer;
-        private List<string> _ocspServers;
-
-        private List<Org.BouncyCastle.X509.X509Crl> _crls;
-
-        private SignMethod _signMethod;
-        private DigestMethod _refsDigestMethod;
-
-        private string _signMethodUri;
-        private string _refsMethodUri;
 
         private bool _disposeCryptoProvider;
 
         #endregion
 
-        #region Constants
-
-        public const string SHA1Uri = "http://www.w3.org/2000/09/xmldsig#sha1";
-        public const string SHA256Uri = "http://www.w3.org/2001/04/xmlenc#sha256";
-        public const string SHA512Uri = "http://www.w3.org/2001/04/xmlenc#sha512";
-
-        public const string RSAwithSHA1Uri = "http://www.w3.org/2000/09/xmldsig#rsa-sha1";
-        public const string RSAwithSHA256Uri = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256";
-        public const string RSAwithSHA512Uri = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512";
-
-        #endregion
-
-        #region Public properties
-        /// <summary>
-        /// Establece la URL del servidor de sellado de tiempo
-        /// </summary>
-        public string TSAServer
-        {
-            get
-            {
-                return _tsaServer;
-            }
-
-            set
-            {
-                _tsaServer = value;
-            }
-        }
-
-        /// <summary>
-        /// Establece el identificador de la política de firma
-        /// </summary>
-        public string PolicyIdentifier
-        {
-            get
-            {
-                return _policyId;
-            }
-
-            set
-            {
-                _policyId = value;
-            }
-        }
-
-        /// <summary>
-        /// Establece la huella en base 64 de la politica de firma
-        /// </summary>
-        public string PolicyHash
-        {
-            get
-            {
-                return _policyHash;
-            }
-            set
-            {
-                _policyHash = value;
-            }
-        }
-
-
-        /// <summary>
-        /// Establece la URI de la politica de firma
-        /// </summary>
-        public string PolicyUri
-        {
-            get
-            {
-                return _policyUri;
-            }
-
-            set
-            {
-                _policyUri = value;
-            }
-
-        }
-
-        /// <summary>
-        /// Tipo de algoritmo para la huella de la firma
-        /// </summary>
-        public SignMethod SignMethod
-        {
-            get
-            {
-                return _signMethod;
-            }
-            set
-            {
-                _signMethod = value;
-
-                switch (_signMethod)
-                {
-                    case SignMethod.RSAwithSHA1:
-                        _signMethodUri = RSAwithSHA1Uri; ;
-                        break;
-
-                    case SignMethod.RSAwithSHA256:
-                        _signMethodUri = RSAwithSHA256Uri;
-                        break;
-
-                    case SignMethod.RSAwithSHA512:
-                        _signMethodUri = RSAwithSHA512Uri;
-                        break;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Tipo de algoritmo para la huella de las referencias
-        /// </summary>
-        public DigestMethod RefsDigestMethod
-        {
-            get
-            {
-                return _refsDigestMethod;
-            }
-
-            set
-            {
-                _refsDigestMethod = value;
-
-                switch (_refsDigestMethod)
-                {
-                    case DigestMethod.SHA1:
-                        _refsMethodUri = SHA1Uri;
-                        break;
-
-                    case DigestMethod.SHA256:
-                        _refsMethodUri = SHA256Uri;
-                        break;
-
-                    case DigestMethod.SHA512:
-                        _refsMethodUri = SHA512Uri;
-                        break;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Certificado empleado para la firma
-        /// </summary>
-        public X509Certificate2 Certificate
-        {
-            get
-            {
-                return _signCertificate;
-            }
-        }
-
+        #region Public variables
         /// <summary>
         /// Documento XML resultante
         /// </summary>
@@ -286,112 +111,9 @@ namespace FirmaXadesNet
             }
         }
 
-        /// <summary>
-        /// Lista de CRLs
-        /// </summary>
-        public IEnumerable<Org.BouncyCastle.X509.X509Crl> CRLEntries
-        {
-            get
-            {
-                return _crls.AsEnumerable();
-            }
-        }
-
-        /// <summary>
-        /// Lista de servidores OCSP
-        /// </summary>
-        public IEnumerable<string> OCSPServers
-        {
-            get
-            {
-                return _ocspServers.AsEnumerable();
-            }
-        }
-        #endregion
-
-        #region Constructors
-        public FirmaXades()
-        {
-            this.SignMethod = SignMethod.RSAwithSHA512;
-            this.RefsDigestMethod = DigestMethod.SHA512;
-
-            _crls = new List<Org.BouncyCastle.X509.X509Crl>();
-            _ocspServers = new List<string>();
-        }
         #endregion
 
         #region Public methods
-        /// <summary>
-        /// Añade una lista de revocación de certificados
-        /// </summary>
-        /// <param name="stream"></param>
-        public void AddCRL(Stream stream)
-        {
-            Org.BouncyCastle.X509.X509CrlParser parser = new Org.BouncyCastle.X509.X509CrlParser();
-            var x509crl = parser.ReadCrl(stream);
-
-            _crls.Add(x509crl);
-        }
-
-        /// <summary>
-        /// Limpia las listas de revocación
-        /// </summary>
-        public void ClearCRLEntries()
-        {
-            _crls.Clear();
-        }
-
-        /// <summary>
-        /// Añade un servidor OCSP a la lista
-        /// </summary>
-        /// <param name="url"></param>
-        public void AddOCSPServer(string url)
-        {
-            if (!_ocspServers.Contains(url))
-            {
-                _ocspServers.Add(url);
-            }
-        }
-
-        /// <summary>
-        /// Limpia la lista de OCSPs
-        /// </summary>
-        public void ClearOCSPServers()
-        {
-            _ocspServers.Clear();
-        }
-
-        /// <summary>
-        /// Especifica el nodo en el cual se añadira la firma
-        /// </summary>
-        /// <param name="elementXPath"></param>
-        /// <param name="namespaces"></param>
-        public void SetSignatureDestination(string elementXPath, Dictionary<string, string> namespaces = null)
-        {
-            XmlNode nodo;
-
-            if (namespaces != null)
-            {
-                XmlNamespaceManager xmlnsMgr = new XmlNamespaceManager(_document.NameTable);
-                foreach (var item in namespaces)
-                {
-                    xmlnsMgr.AddNamespace(item.Key, item.Value);
-                }
-
-                nodo = _document.SelectSingleNode(elementXPath, xmlnsMgr);
-            }
-            else
-            {
-                nodo = _document.SelectSingleNode(elementXPath);
-            }
-
-            if (nodo == null)
-            {
-                throw new Exception("Elemento no encontrado");
-            }
-
-            _xadesSignedXml.SignatureNodeDestination = (XmlElement)nodo;
-        }
 
         /// <summary>
         /// Carga el documento XML especificado y establece para firmar el elemento especificado en elementId
@@ -622,39 +344,13 @@ namespace FirmaXadesNet
             _document = null;
         }
 
-        /// <summary>
-        /// Añade una transformación XPath al contenido a firmar
-        /// </summary>
-        /// <param name="XPathString"></param>
-        public void AddXPathTransform(string XPathString)
+
+        public X509Certificate2 GetSigningCertificate()
         {
-            XmlDocument document;
-            
-            if (_xadesSignedXml == null)
-            {
-                throw new NullReferenceException("No se ha establecido el contenido a firmar");
-            }
+            XmlNode keyXml = _xadesSignedXml.KeyInfo.GetXml().GetElementsByTagName("X509Certificate", SignedXml.XmlDsigNamespaceUrl)[0];
 
-            if (_document != null)
-            {
-                document = _document;
-            }
-            else
-            {
-                document = new XmlDocument();
-            }
-            
-            XmlElement xPathElem = document.CreateElement("XPath");
-            xPathElem.InnerText = XPathString;
-
-            XmlDsigXPathTransform transform = new XmlDsigXPathTransform();
-            transform.LoadInnerXml(xPathElem.SelectNodes("."));
-
-            Reference reference = _xadesSignedXml.SignedInfo.References[0] as Reference;
-
-            reference.AddTransform(transform);
+            return new X509Certificate2(Convert.FromBase64String(keyXml.InnerText));
         }
-
 
         #region Métodos de firma
 
@@ -663,40 +359,40 @@ namespace FirmaXadesNet
         /// </summary>
         /// <param name="certificate"></param>
         /// <param name="signMethod"></param>
-        public void Sign(X509Certificate2 certificate, SignMethod? signMethod = null)
+        public void Sign(SignatureParameters parameters)
         {
-            if (certificate == null)
+            if (parameters.SigningCertificate == null)
             {
                 throw new Exception("Es necesario un certificado válido para la firma.");
-            }
-
-            if (signMethod.HasValue)
-            {
-                this.SignMethod = signMethod.Value;
-            }
-
-            if (!string.IsNullOrEmpty(_signatureId) && _document != null &&
-                _document.SelectSingleNode("//*[@Id='" + _signatureId + "']") != null)
-            {
-                throw new Exception("El documento ya ha sido firmado, debe seleccionar otro método de firma.");
             }
 
             if (string.IsNullOrEmpty(_signatureId))
             {
                 SetSignatureId();
             }
-
-            _signCertificate = certificate;
-
-            AddCertificateInfo();
-            AddXadesInfo();
+            
+            AddCertificateInfo(parameters);
+            AddXadesInfo(parameters);
 
             foreach (Reference reference in _xadesSignedXml.SignedInfo.References)
             {
-                reference.DigestMethod = _refsMethodUri;
+                reference.DigestMethod = parameters.DigestMethod.URI;
             }
 
-            _xadesSignedXml.SignedInfo.SignatureMethod = _signMethodUri;
+            _xadesSignedXml.SignedInfo.SignatureMethod = parameters.SignatureMethod.URI;
+
+            if (parameters.SignatureDestination != null)
+            {
+                SetSignatureDestination(parameters.SignatureDestination);
+            }
+
+            if (parameters.XPathTransformations.Count > 0)
+            {
+                foreach (var xPathTrans in parameters.XPathTransformations)
+                {
+                    AddXPathTransform(xPathTrans);
+                }
+            }
 
             ComputeSignature();
 
@@ -712,16 +408,11 @@ namespace FirmaXadesNet
         /// </summary>
         /// <param name="certificate"></param>
         /// <param name="signMethod"></param>
-        public void CoSign(X509Certificate2 certificate, SignMethod? signMethod = null)
+        public void CoSign(SignatureParameters parameters)
         {
             if (_xadesSignedXml == null)
             {
                 throw new Exception("No hay ninguna firma XADES creada previamente.");
-            }
-
-            if (certificate == null)
-            {
-                throw new Exception("Es necesario un certificado válido para la firma.");
             }
 
             Reference refContent = _xadesSignedXml.SignedInfo.References[0] as Reference;
@@ -763,7 +454,7 @@ namespace FirmaXadesNet
 
             SetSignatureId();
 
-            Sign(certificate, signMethod);
+            Sign(parameters);
         }
 
 
@@ -772,7 +463,7 @@ namespace FirmaXadesNet
         /// </summary>
         /// <param name="certificate"></param>
         /// <param name="signMethod"></param>
-        public void CounterSign(X509Certificate2 certificate, SignMethod? signMethod = null)
+        public void CounterSign(SignatureParameters parameters)
         {
             SetSignatureId();
 
@@ -781,21 +472,14 @@ namespace FirmaXadesNet
                 throw new Exception("No hay ninguna firma XADES cargada previamente.");
             }
 
-            if (certificate == null)
+            if (parameters.SigningCertificate == null)
             {
                 throw new Exception("Es necesario un certificado válido para la firma.");
             }
 
-            if (signMethod.HasValue)
-            {
-                this.SignMethod = signMethod.Value;
-            }
-
-            _signCertificate = certificate;
-
             XadesSignedXml counterSignature = new XadesSignedXml(_document);
 
-            SetCryptoServiceProvider();
+            SetCryptoServiceProvider(parameters.SigningCertificate);
 
             counterSignature.SigningKey = _rsaKey;
 
@@ -809,7 +493,7 @@ namespace FirmaXadesNet
 
             KeyInfo keyInfo = new KeyInfo();
             keyInfo.Id = "KeyInfoId-" + _signatureId;
-            keyInfo.AddClause(new KeyInfoX509Data((X509Certificate)_signCertificate));
+            keyInfo.AddClause(new KeyInfoX509Data((X509Certificate)parameters.SigningCertificate));
             keyInfo.AddClause(new RSAKeyValue((RSA)_rsaKey));
             counterSignature.KeyInfo = keyInfo;
 
@@ -829,13 +513,13 @@ namespace FirmaXadesNet
             AddSignatureProperties(counterSignatureXadesObject.QualifyingProperties.SignedProperties.SignedSignatureProperties,
                 counterSignatureXadesObject.QualifyingProperties.SignedProperties.SignedDataObjectProperties,
                 counterSignatureXadesObject.QualifyingProperties.UnsignedProperties.UnsignedSignatureProperties,
-                "text/xml", _signCertificate);
+                "text/xml", parameters);
 
             counterSignature.AddXadesObject(counterSignatureXadesObject);
 
             foreach (Reference signReference in counterSignature.SignedInfo.References)
             {
-                signReference.DigestMethod = _refsMethodUri;
+                signReference.DigestMethod = parameters.DigestMethod.URI;
             }
 
             counterSignature.AddXadesNamespace = true;
@@ -931,24 +615,6 @@ namespace FirmaXadesNet
 
                 firma._xadesSignedXml = new XadesSignedXml(firma._document);
                 firma._xadesSignedXml.LoadXml((XmlElement)signatureNode);
-
-                if (firma._xadesSignedXml.SignedInfo.SignatureMethod == RSAwithSHA1Uri)
-                {
-                    firma.SignMethod = SignMethod.RSAwithSHA1;
-                }
-                else if (firma._xadesSignedXml.SignedInfo.SignatureMethod == RSAwithSHA256Uri)
-                {
-                    firma.SignMethod = SignMethod.RSAwithSHA256;
-                }
-                else if (firma._xadesSignedXml.SignedInfo.SignatureMethod == RSAwithSHA512Uri)
-                {
-                    firma.SignMethod = SignMethod.RSAwithSHA512;
-                }
-
-                XmlNode keyXml = firma._xadesSignedXml.KeyInfo.GetXml().GetElementsByTagName("X509Certificate", SignedXml.XmlDsigNamespaceUrl)[0];
-
-                firma._signCertificate = new X509Certificate2(Convert.FromBase64String(keyXml.InnerText));
-
                 firma._xadesSignedXml.FindContentElement();
 
                 firmas.Add(firma);
@@ -1010,20 +676,20 @@ namespace FirmaXadesNet
         /// <summary>
         /// Amplia la firma actual a XADES-T.
         /// </summary>
-        public void UpgradeToXadesT()
+        public void UpgradeToXadesT(UpgradeParameters parameters)
         {
-            XadesTUpgrader upgrader = new XadesTUpgrader(this);
-            upgrader.Upgrade();
+            XadesTUpgrader upgrader = new XadesTUpgrader();
+            upgrader.Upgrade(this, parameters);
         }
 
 
         /// <summary>
         /// Amplia la firma actual a XADES-XL.
         /// </summary>
-        public void UpgradeToXadesXL()
+        public void UpgradeToXadesXL(UpgradeParameters parameters)
         {
-            XadesXLUpgrader upgrader = new XadesXLUpgrader(this);
-            upgrader.Upgrade();
+            XadesXLUpgrader upgrader = new XadesXLUpgrader();
+            upgrader.Upgrade(this, parameters);
         }
 
         public void Dispose()
@@ -1049,6 +715,72 @@ namespace FirmaXadesNet
             _signatureId = "Signature-" + id;
             _signatureValueId = "SignatureValue-" + id;
         }
+
+        /// <summary>
+        /// Especifica el nodo en el cual se añadira la firma
+        /// </summary>
+        /// <param name="elementXPath"></param>
+        /// <param name="namespaces"></param>
+        private void SetSignatureDestination(SignatureDestination destination)
+        {
+            XmlNode nodo;
+
+            if (destination.Namespaces.Count > 0)
+            {
+                XmlNamespaceManager xmlnsMgr = new XmlNamespaceManager(_document.NameTable);
+                foreach (var item in destination.Namespaces)
+                {
+                    xmlnsMgr.AddNamespace(item.Key, item.Value);
+                }
+
+                nodo = _document.SelectSingleNode(destination.XPathElement, xmlnsMgr);
+            }
+            else
+            {
+                nodo = _document.SelectSingleNode(destination.XPathElement);
+            }
+
+            if (nodo == null)
+            {
+                throw new Exception("Elemento no encontrado");
+            }
+
+            _xadesSignedXml.SignatureNodeDestination = (XmlElement)nodo;
+        }
+
+        /// <summary>
+        /// Añade una transformación XPath al contenido a firmar
+        /// </summary>
+        /// <param name="XPathString"></param>
+        private void AddXPathTransform(string XPathString)
+        {
+            XmlDocument document;
+
+            if (_xadesSignedXml == null)
+            {
+                throw new NullReferenceException("No se ha establecido el contenido a firmar");
+            }
+
+            if (_document != null)
+            {
+                document = _document;
+            }
+            else
+            {
+                document = new XmlDocument();
+            }
+
+            XmlElement xPathElem = document.CreateElement("XPath");
+            xPathElem.InnerText = XPathString;
+
+            XmlDsigXPathTransform transform = new XmlDsigXPathTransform();
+            transform.LoadInnerXml(xPathElem.SelectNodes("."));
+
+            Reference reference = _xadesSignedXml.SignedInfo.References[0] as Reference;
+
+            reference.AddTransform(transform);
+        }
+
 
         /// <summary>
         /// Construye el documento enveloped
@@ -1150,7 +882,7 @@ namespace FirmaXadesNet
 
         #region Información y propiedades de la firma
 
-        private void AddXadesInfo()
+        private void AddXadesInfo(SignatureParameters parameters)
         {
             _xadesSignedXml.Signature.Id = _signatureId;
             XadesObject xadesObject = new XadesObject();
@@ -1163,18 +895,18 @@ namespace FirmaXadesNet
                 xadesObject.QualifyingProperties.SignedProperties.SignedSignatureProperties,
                 xadesObject.QualifyingProperties.SignedProperties.SignedDataObjectProperties,
                 xadesObject.QualifyingProperties.UnsignedProperties.UnsignedSignatureProperties,
-                _mimeType, _signCertificate);
+                _mimeType, parameters);
 
             _xadesSignedXml.AddXadesObject(xadesObject);
         }
 
 
-        private void SetCryptoServiceProvider()
+        private void SetCryptoServiceProvider(X509Certificate2 certificate)
         {
             string providerName = "Microsoft Enhanced RSA and AES Cryptographic Provider";
             int providerType = 24;
 
-            var key = (RSACryptoServiceProvider)_signCertificate.PrivateKey;
+            var key = (RSACryptoServiceProvider)certificate.PrivateKey;
 
             if (_rsaKey != null &&
                 key.CspKeyContainerInfo.UniqueKeyContainerName == _rsaKey.CspKeyContainerInfo.UniqueKeyContainerName)
@@ -1210,15 +942,15 @@ namespace FirmaXadesNet
         }
 
 
-        private void AddCertificateInfo()
+        private void AddCertificateInfo(SignatureParameters parameters)
         {
-            SetCryptoServiceProvider();
+            SetCryptoServiceProvider(parameters.SigningCertificate);
 
             _xadesSignedXml.SigningKey = _rsaKey;
 
             KeyInfo keyInfo = new KeyInfo();
             keyInfo.Id = "KeyInfoId-" + _signatureId;
-            keyInfo.AddClause(new KeyInfoX509Data((X509Certificate)_signCertificate));
+            keyInfo.AddClause(new KeyInfoX509Data((X509Certificate)parameters.SigningCertificate));
             keyInfo.AddClause(new RSAKeyValue((RSA)_rsaKey));
 
             _xadesSignedXml.KeyInfo = keyInfo;
@@ -1233,38 +965,41 @@ namespace FirmaXadesNet
 
 
         private void AddSignatureProperties(SignedSignatureProperties signedSignatureProperties, SignedDataObjectProperties signedDataObjectProperties,
-                   UnsignedSignatureProperties unsignedSignatureProperties, string mimeType, X509Certificate2 certificado)
+                   UnsignedSignatureProperties unsignedSignatureProperties, string mimeType, SignatureParameters parameters)
         {
             Cert cert;
 
             cert = new Cert();
-            cert.IssuerSerial.X509IssuerName = certificado.IssuerName.Name;
-            cert.IssuerSerial.X509SerialNumber = CertUtil.HexToDecimal(certificado.SerialNumber);
-            DigestUtil.SetCertDigest(_signCertificate.GetRawCertData(), _refsMethodUri, cert.CertDigest);
+            cert.IssuerSerial.X509IssuerName = parameters.SigningCertificate.IssuerName.Name;
+            cert.IssuerSerial.X509SerialNumber = CertUtil.HexToDecimal(parameters.SigningCertificate.SerialNumber);
+            DigestUtil.SetCertDigest(parameters.SigningCertificate.GetRawCertData(), parameters.DigestMethod, cert.CertDigest);
             signedSignatureProperties.SigningCertificate.CertCollection.Add(cert);
 
-            if (!string.IsNullOrEmpty(_policyId))
+            if (parameters.SignaturePolicyInfo != null)
             {
-                signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyImplied = false;
-                signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyId.Identifier.IdentifierUri = _policyId;
+                if (!string.IsNullOrEmpty(parameters.SignaturePolicyInfo.PolicyIdentifier))
+                {
+                    signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyImplied = false;
+                    signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyId.Identifier.IdentifierUri = parameters.SignaturePolicyInfo.PolicyIdentifier;
+                }
+
+                if (!string.IsNullOrEmpty(parameters.SignaturePolicyInfo.PolicyUri))
+                {
+                    SigPolicyQualifier spq = new SigPolicyQualifier();
+                    spq.AnyXmlElement = _document.CreateElement("SPURI", XadesSignedXml.XadesNamespaceUri);
+                    spq.AnyXmlElement.InnerText = parameters.SignaturePolicyInfo.PolicyUri;
+
+                    signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyQualifiers.SigPolicyQualifierCollection.Add(spq);
+                }
+
+                if (!string.IsNullOrEmpty(parameters.SignaturePolicyInfo.PolicyHash))
+                {
+                    signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyHash.DigestMethod.Algorithm = SignedXml.XmlDsigSHA1Url;
+                    signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyHash.DigestValue = Convert.FromBase64String(parameters.SignaturePolicyInfo.PolicyHash);
+                }
             }
-
-            if (!string.IsNullOrEmpty(_policyUri))
-            {
-                SigPolicyQualifier spq = new SigPolicyQualifier();
-                spq.AnyXmlElement = _document.CreateElement("SPURI", XadesSignedXml.XadesNamespaceUri);
-                spq.AnyXmlElement.InnerText = _policyUri;
-
-                signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyQualifiers.SigPolicyQualifierCollection.Add(spq);
-            }
-
-            if (!string.IsNullOrEmpty(_policyHash))
-            {
-                signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyHash.DigestMethod.Algorithm = SignedXml.XmlDsigSHA1Url;
-                signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyHash.DigestValue = Convert.FromBase64String(PolicyHash);
-            }
-
-            signedSignatureProperties.SigningTime = DateTime.Now;
+            
+            signedSignatureProperties.SigningTime = parameters.SigningDate.HasValue ? parameters.SigningDate.Value : DateTime.Now;
 
             if (!string.IsNullOrEmpty(mimeType))
             {

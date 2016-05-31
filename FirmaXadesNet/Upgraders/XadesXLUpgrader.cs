@@ -22,12 +22,14 @@
 // --------------------------------------------------------------------------------------------------------------------
 
 using FirmaXadesNet.Clients;
+using FirmaXadesNet.Parameters;
 using FirmaXadesNet.Utils;
 using Microsoft.Xades;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Org.BouncyCastle.Ocsp;
 using Org.BouncyCastle.Tsp;
+using Org.BouncyCastle.X509;
 using Org.BouncyCastle.X509.Store;
 using System;
 using System.Collections;
@@ -41,26 +43,23 @@ using System.Xml;
 
 namespace FirmaXadesNet.Upgraders
 {
-    class XadesXLUpgrader : XadesUpgrader
+    class XadesXLUpgrader : IXadesUpgrader
     {
-        #region Constructors
-
-        public XadesXLUpgrader(FirmaXades firma)
-            : base(firma)
-        {
-
-        }
-
-        #endregion
-
+              
         #region Public methods
 
-        public override void Upgrade()
-        {
+        public void Upgrade(FirmaXades firma, UpgradeParameters parameters)
+        {               
             UnsignedProperties unsignedProperties = null;
             CertificateValues certificateValues = null;
 
-            unsignedProperties = _firma.XadesSignature.UnsignedProperties;
+            X509Certificate2 signingCertificate = null;
+
+            XmlNode keyXml = firma.XadesSignature.KeyInfo.GetXml().GetElementsByTagName("X509Certificate", SignedXml.XmlDsigNamespaceUrl)[0];
+
+            signingCertificate = new X509Certificate2(Convert.FromBase64String(keyXml.InnerText));
+
+            unsignedProperties = firma.XadesSignature.UnsignedProperties;
             unsignedProperties.UnsignedSignatureProperties.CompleteCertificateRefs = new CompleteCertificateRefs();
             unsignedProperties.UnsignedSignatureProperties.CompleteCertificateRefs.Id = "CompleteCertificates-" + Guid.NewGuid().ToString();
 
@@ -74,15 +73,15 @@ namespace FirmaXadesNet.Upgraders
             unsignedProperties.UnsignedSignatureProperties.RevocationValues = new RevocationValues();
             unsignedProperties.UnsignedSignatureProperties.RevocationValues.Id = "RevocationValues-" + Guid.NewGuid().ToString();
 
-            AddCertificate(_firma.Certificate, unsignedProperties, false);
+            AddCertificate(signingCertificate, unsignedProperties, false, parameters.OCSPServers, parameters.CRL, parameters.DigestMethod);
 
-            AddTSACertificates(unsignedProperties);
+            AddTSACertificates(unsignedProperties, parameters.OCSPServers, parameters.CRL, parameters.DigestMethod);
 
-            _firma.XadesSignature.UnsignedProperties = unsignedProperties;
+            firma.XadesSignature.UnsignedProperties = unsignedProperties;
 
-            TimeStampCertRefs();
+            TimeStampCertRefs(firma, parameters);
 
-            _firma.UpdateDocument();
+            firma.UpdateDocument();
 
         }
 
@@ -142,16 +141,11 @@ namespace FirmaXadesNet.Upgraders
         /// <returns></returns>
         private bool CertificateChecked(X509Certificate2 cert, UnsignedProperties unsignedProperties)
         {
-            string certHash = null;
-
-            using (var hashAlg = DigestUtil.GetHashAlg(_firma.RefsDigestMethod))
+            foreach (EncapsulatedX509Certificate item in unsignedProperties.UnsignedSignatureProperties.CertificateValues.EncapsulatedX509CertificateCollection)
             {
-                certHash = Convert.ToBase64String(hashAlg.ComputeHash(cert.GetRawCertData()));
-            }
+                X509Certificate2 certItem = new X509Certificate2(item.PkiData);
 
-            foreach (Cert item in unsignedProperties.UnsignedSignatureProperties.CompleteCertificateRefs.CertRefs.CertCollection)
-            {
-                if (Convert.ToBase64String(item.CertDigest.DigestValue) == certHash)
+                if (certItem.SubjectName.Equals(cert.SubjectName))
                 {
                     return true;
                 }
@@ -167,7 +161,8 @@ namespace FirmaXadesNet.Upgraders
         /// <param name="unsignedProperties"></param>
         /// <param name="addCertValue"></param>
         /// <param name="extraCerts"></param>
-        private void AddCertificate(X509Certificate2 cert, UnsignedProperties unsignedProperties, bool addCert, X509Certificate2[] extraCerts = null)
+        private void AddCertificate(X509Certificate2 cert, UnsignedProperties unsignedProperties, bool addCert, IEnumerable<string> ocspServers,
+            IEnumerable<X509Crl> crlList, FirmaXadesNet.Crypto.DigestMethod digestMethod, X509Certificate2[] extraCerts = null)
         {
             if (addCert)
             {
@@ -181,7 +176,7 @@ namespace FirmaXadesNet.Upgraders
                 Cert chainCert = new Cert();
                 chainCert.IssuerSerial.X509IssuerName = cert.IssuerName.Name;
                 chainCert.IssuerSerial.X509SerialNumber = CertUtil.HexToDecimal(cert.SerialNumber);
-                DigestUtil.SetCertDigest(cert.GetRawCertData(), _firma.RefsDigestMethod, chainCert.CertDigest);
+                DigestUtil.SetCertDigest(cert.GetRawCertData(), digestMethod, chainCert.CertDigest);
                 chainCert.URI = "#Cert" + guidCert;
                 unsignedProperties.UnsignedSignatureProperties.CompleteCertificateRefs.CertRefs.CertCollection.Add(chainCert);
 
@@ -200,11 +195,11 @@ namespace FirmaXadesNet.Upgraders
 
                 enumerator.MoveNext();
 
-                bool valid = ValidateCertificateByCRL(unsignedProperties, cert, enumerator.Current.Certificate);
+                bool valid = ValidateCertificateByCRL(unsignedProperties, cert, enumerator.Current.Certificate, crlList, digestMethod);
 
                 if (!valid)
                 {
-                    var ocspCerts = ValidateCertificateByOCSP(unsignedProperties, cert, enumerator.Current.Certificate);
+                    var ocspCerts = ValidateCertificateByOCSP(unsignedProperties, cert, enumerator.Current.Certificate, ocspServers, digestMethod);
 
                     if (ocspCerts != null)
                     {
@@ -214,12 +209,12 @@ namespace FirmaXadesNet.Upgraders
                         {
                             var chainOcsp = CertUtil.GetCertChain(startOcspCert, ocspCerts);
 
-                            AddCertificate(chainOcsp.ChainElements[1].Certificate, unsignedProperties, true, ocspCerts);
+                            AddCertificate(chainOcsp.ChainElements[1].Certificate, unsignedProperties, true, ocspServers, crlList, digestMethod, ocspCerts);
                         }
                     }
                 }
 
-                AddCertificate(enumerator.Current.Certificate, unsignedProperties, true, extraCerts);
+                AddCertificate(enumerator.Current.Certificate, unsignedProperties, true, ocspServers, crlList, digestMethod, extraCerts);
             }
         }
 
@@ -250,12 +245,13 @@ namespace FirmaXadesNet.Upgraders
             return null;
         }
 
-        private bool ValidateCertificateByCRL(UnsignedProperties unsignedProperties, X509Certificate2 certificate, X509Certificate2 issuer)
+        private bool ValidateCertificateByCRL(UnsignedProperties unsignedProperties, X509Certificate2 certificate, X509Certificate2 issuer, 
+            IEnumerable<X509Crl> crlList, FirmaXadesNet.Crypto.DigestMethod digestMethod)
         {
             Org.BouncyCastle.X509.X509Certificate clientCert = CertUtil.ConvertToX509Certificate(certificate);
             Org.BouncyCastle.X509.X509Certificate issuerCert = CertUtil.ConvertToX509Certificate(issuer);
 
-            foreach (var crlEntry in _firma.CRLEntries)
+            foreach (var crlEntry in crlList)
             {
                 if (crlEntry.IssuerDN.Equivalent(issuerCert.SubjectDN) && crlEntry.NextUpdate.Value > DateTime.Now)
                 {
@@ -278,7 +274,7 @@ namespace FirmaXadesNet.Upgraders
                             }
 
                             byte[] crlEncoded = crlEntry.GetEncoded();
-                            DigestUtil.SetCertDigest(crlEncoded, _firma.RefsDigestMethod, crlRef.CertDigest);
+                            DigestUtil.SetCertDigest(crlEncoded, digestMethod, crlRef.CertDigest);
 
                             CRLValue crlValue = new CRLValue();
                             crlValue.PkiData = crlEncoded;
@@ -300,10 +296,11 @@ namespace FirmaXadesNet.Upgraders
             return false;
         }
 
-        private X509Certificate2[] ValidateCertificateByOCSP(UnsignedProperties unsignedProperties, X509Certificate2 client, X509Certificate2 issuer)
+        private X509Certificate2[] ValidateCertificateByOCSP(UnsignedProperties unsignedProperties, X509Certificate2 client, X509Certificate2 issuer, 
+            IEnumerable<string> ocspServers, FirmaXadesNet.Crypto.DigestMethod digestMethod)
         {
             bool byKey = false;
-            List<string> ocspServers = new List<string>();
+            List<string> finalOcspServers = new List<string>();
             Org.BouncyCastle.X509.X509Certificate clientCert = CertUtil.ConvertToX509Certificate(client);
             Org.BouncyCastle.X509.X509Certificate issuerCert = CertUtil.ConvertToX509Certificate(issuer);
 
@@ -312,15 +309,15 @@ namespace FirmaXadesNet.Upgraders
 
             if (!string.IsNullOrEmpty(certOcspUrl))
             {
-                ocspServers.Add(certOcspUrl);
-            }
-
-            foreach (var ocspUrl in _firma.OCSPServers)
-            {
-                ocspServers.Add(ocspUrl);
+                finalOcspServers.Add(certOcspUrl);
             }
 
             foreach (var ocspUrl in ocspServers)
+            {
+                finalOcspServers.Add(ocspUrl);
+            }
+
+            foreach (var ocspUrl in finalOcspServers)
             {
                 byte[] resp = ocsp.QueryBinary(clientCert, issuerCert, ocspUrl);
 
@@ -340,7 +337,7 @@ namespace FirmaXadesNet.Upgraders
 
                     OCSPRef ocspRef = new OCSPRef();
                     ocspRef.OCSPIdentifier.UriAttribute = "#OcspValue" + guidOcsp;
-                    DigestUtil.SetCertDigest(rEncoded, _firma.RefsDigestMethod, ocspRef.CertDigest);
+                    DigestUtil.SetCertDigest(rEncoded, digestMethod, ocspRef.CertDigest);
 
                     Org.BouncyCastle.Asn1.Ocsp.ResponderID rpId = or.ResponderId.ToAsn1Object();
                     string name = GetResponderName(rpId, ref byKey);
@@ -398,7 +395,7 @@ namespace FirmaXadesNet.Upgraders
         /// Inserta y valida los certificados del servidor de sellado de tiempo.
         /// </summary>
         /// <param name="unsignedProperties"></param>
-        private void AddTSACertificates(UnsignedProperties unsignedProperties)
+        private void AddTSACertificates(UnsignedProperties unsignedProperties, IEnumerable<string> ocspServers, IEnumerable<X509Crl> crlList, FirmaXadesNet.Crypto.DigestMethod digestMethod)
         {
             TimeStampToken token = new TimeStampToken(new Org.BouncyCastle.Cms.CmsSignedData(unsignedProperties.UnsignedSignatureProperties.SignatureTimeStampCollection[0].EncapsulatedTimeStamp.PkiData));
             IX509Store store = token.GetCertificates("Collection");
@@ -413,18 +410,18 @@ namespace FirmaXadesNet.Upgraders
             }
 
             X509Certificate2 startCert = DetermineStartCert(tsaCerts);
-            AddCertificate(startCert, unsignedProperties, true, tsaCerts.ToArray());
+            AddCertificate(startCert, unsignedProperties, true, ocspServers, crlList, digestMethod, tsaCerts.ToArray());
         }
 
-        private void TimeStampCertRefs()
+        private void TimeStampCertRefs(FirmaXades firma, UpgradeParameters parameters)
         {
             TimeStamp xadesXTimeStamp;
             ArrayList signatureValueElementXpaths;
             byte[] signatureValueHash;
 
-            XmlElement nodoFirma = _firma.XadesSignature.GetSignatureElement();
+            XmlElement nodoFirma = firma.XadesSignature.GetSignatureElement();
 
-            XmlNamespaceManager nm = new XmlNamespaceManager(_firma.Document.NameTable);
+            XmlNamespaceManager nm = new XmlNamespaceManager(firma.Document.NameTable);
             nm.AddNamespace("xades", XadesSignedXml.XadesNamespaceUri);
             nm.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
 
@@ -432,7 +429,7 @@ namespace FirmaXadesNet.Upgraders
 
             if (xmlCompleteCertRefs == null)
             {
-                _firma.UpdateDocument();
+                firma.UpdateDocument();
             }
 
             signatureValueElementXpaths = new ArrayList();
@@ -440,21 +437,21 @@ namespace FirmaXadesNet.Upgraders
             signatureValueElementXpaths.Add("ds:Object/xades:QualifyingProperties/xades:UnsignedProperties/xades:UnsignedSignatureProperties/xades:SignatureTimeStamp");
             signatureValueElementXpaths.Add("ds:Object/xades:QualifyingProperties/xades:UnsignedProperties/xades:UnsignedSignatureProperties/xades:CompleteCertificateRefs");
             signatureValueElementXpaths.Add("ds:Object/xades:QualifyingProperties/xades:UnsignedProperties/xades:UnsignedSignatureProperties/xades:CompleteRevocationRefs");
-            signatureValueHash = DigestUtil.ComputeHashValue(XMLUtil.ComputeValueOfElementList(_firma.XadesSignature, signatureValueElementXpaths), DigestMethod.SHA1);
+            signatureValueHash = DigestUtil.ComputeHashValue(XMLUtil.ComputeValueOfElementList(firma.XadesSignature, signatureValueElementXpaths), parameters.DigestMethod);
 
-            byte[] tsa = TimeStampClient.GetTimeStamp(_firma.TSAServer, signatureValueHash, DigestMethod.SHA1, true);
+            byte[] tsa = parameters.TimeStampClient.GetTimeStamp(signatureValueHash, parameters.DigestMethod, true);
 
             xadesXTimeStamp = new TimeStamp("SigAndRefsTimeStamp");
-            xadesXTimeStamp.Id = "SigAndRefsStamp-" + _firma.XadesSignature.Signature.Id;
+            xadesXTimeStamp.Id = "SigAndRefsStamp-" + firma.XadesSignature.Signature.Id;
             xadesXTimeStamp.EncapsulatedTimeStamp.PkiData = tsa;
             xadesXTimeStamp.EncapsulatedTimeStamp.Id = "SigAndRefsStamp-" + Guid.NewGuid().ToString();
-            UnsignedProperties unsignedProperties = _firma.XadesSignature.UnsignedProperties;
+            UnsignedProperties unsignedProperties = firma.XadesSignature.UnsignedProperties;
 
             unsignedProperties.UnsignedSignatureProperties.RefsOnlyTimeStampFlag = false;
             unsignedProperties.UnsignedSignatureProperties.SigAndRefsTimeStampCollection.Add(xadesXTimeStamp);
 
 
-            _firma.XadesSignature.UnsignedProperties = unsignedProperties;
+            firma.XadesSignature.UnsignedProperties = unsignedProperties;
         }
 
         #endregion

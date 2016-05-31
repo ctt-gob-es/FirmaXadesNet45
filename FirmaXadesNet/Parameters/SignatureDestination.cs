@@ -1,7 +1,7 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// FrmSeleccionarFirma.cs
+// SignatureDestination.cs
 //
-// FirmaXadesNet - Librería la para generación de firmas XADES
+// FirmaXadesNet - Librería para la generación de firmas XADES
 // Copyright (C) 2016 Dpto. de Nuevas Tecnologías de la Dirección General de Urbanismo del Ayto. de Cartagena
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,47 +21,31 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
-using FirmaXadesNet;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
-namespace TestFirmaXades
+namespace FirmaXadesNet.Parameters
 {
-    public partial class FrmSeleccionarFirma : Form
+    public class SignatureDestination
     {
-        private FirmaXades[] _firmas = null;
+        private Dictionary<string, string> _namespaces;
         
-        public FirmaXades FirmaSeleccionada
+        public string XPathElement { get; set; }
+
+        public Dictionary<string, string> Namespaces
         {
             get
             {
-                return _firmas[lstFirmas.SelectedIndex];
+                return _namespaces;
             }
         }
-        
-        public FrmSeleccionarFirma(FirmaXades[] firmas)
+
+        public SignatureDestination()
         {
-            InitializeComponent();
-
-            _firmas = firmas;
-
-            foreach (var firma in firmas)
-            {                
-                string textoFirma = string.Format("{0} - {1}",
-                    firma.XadesSignature.XadesObject.QualifyingProperties.SignedProperties.SignedSignatureProperties.SigningTime,
-                    firma.GetSigningCertificate().Subject);
-
-                lstFirmas.Items.Add(textoFirma);
-            }
-
-            lstFirmas.SelectedIndex = 0;
+            _namespaces = new Dictionary<string, string>();
         }
     }
 }

@@ -29,6 +29,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using FirmaXadesNet.Crypto;
 
 namespace FirmaXadesNet.Utils
 {
@@ -36,80 +37,18 @@ namespace FirmaXadesNet.Utils
     {
         #region Public methods
 
-        public static HashAlgorithm GetHashAlg(DigestMethod digestMethod)
+        public static void SetCertDigest(byte[] rawCert, FirmaXadesNet.Crypto.DigestMethod digestMethod, DigestAlgAndValueType destination)
         {
-            if (digestMethod == DigestMethod.SHA1)
+            using (var hashAlg = digestMethod.GetHashAlgorithm())
             {
-                return SHA1.Create();
-            }
-            else if (digestMethod == DigestMethod.SHA256)
-            {
-                return SHA256.Create();
-            }
-            else if (digestMethod == DigestMethod.SHA512)
-            {
-                return SHA512.Create();
-            }
-            else
-            {
-                throw new Exception("Algoritmo no soportado");
-            }
-        }
-
-        public static HashAlgorithm GetHashAlg(string digestAlgorithm)
-        {
-            if (digestAlgorithm == FirmaXades.SHA1Uri)
-            {
-                return SHA1.Create();
-            }
-            else if (digestAlgorithm == FirmaXades.SHA256Uri)
-            {
-                return SHA256.Create();
-            }
-            else if (digestAlgorithm == FirmaXades.SHA512Uri)
-            {
-                return SHA512.Create();
-            }
-            else
-            {
-                throw new Exception("Algoritmo no soportado");
-            }
-        }
-
-        public static void SetCertDigest(byte[] rawCert, string digestAlgorithm, DigestAlgAndValueType destination)
-        {
-            using (var hashAlg = GetHashAlg(digestAlgorithm))
-            {
-                destination.DigestMethod.Algorithm = digestAlgorithm;
+                destination.DigestMethod.Algorithm = digestMethod.URI;
                 destination.DigestValue = hashAlg.ComputeHash(rawCert);
             }
         }
 
-        public static void SetCertDigest(byte[] rawCert, DigestMethod digestMethod, DigestAlgAndValueType destination)
+        public static byte[] ComputeHashValue(byte[] value, FirmaXadesNet.Crypto.DigestMethod digestMethod)
         {
-            string digestAlgorithm = null;
-            
-            switch (digestMethod)
-            {
-                case DigestMethod.SHA1:
-                    digestAlgorithm = FirmaXades.SHA1Uri;
-                    break;
-
-                case DigestMethod.SHA256:
-                    digestAlgorithm = FirmaXades.SHA256Uri;
-                    break;
-
-                case DigestMethod.SHA512:
-                    digestAlgorithm = FirmaXades.SHA512Uri;
-                    break;
-            }
-
-            SetCertDigest(rawCert, digestAlgorithm, destination);
-        }
-
-        public static byte[] ComputeHashValue(byte[] value, DigestMethod digestMethod)
-        {
-            using (var alg = DigestUtil.GetHashAlg(digestMethod))
+            using (var alg = digestMethod.GetHashAlgorithm())
             {
                 return alg.ComputeHash(value);
             }

@@ -29,46 +29,38 @@ using Org.BouncyCastle.Tsp;
 using System.Net;
 using Org.BouncyCastle.Math;
 using System.IO;
+using FirmaXadesNet.Crypto;
 
 namespace FirmaXadesNet.Clients
 {
-    class TimeStampClient
+    public class TimeStampClient
     {
+        private string _url;
+
+        public TimeStampClient(string url)
+        {
+            _url = url;
+        }
+
         #region Public methods
 
         /// <summary>
         /// Realiza la petición de sellado del hash que se pasa como parametro y devuelve la
         /// respuesta del servidor.
         /// </summary>
-        /// <param name="url"></param>
         /// <param name="hash"></param>
         /// <param name="digestMethod"></param>
         /// <param name="certReq"></param>
         /// <returns></returns>
-        public static byte[] GetTimeStamp(string url, byte[] hash, DigestMethod digestMethod, bool certReq)
+        public byte[] GetTimeStamp(byte[] hash, DigestMethod digestMethod, bool certReq)
         {
-            string digestAlg;
-            
             TimeStampRequestGenerator tsrq = new TimeStampRequestGenerator();
             tsrq.SetCertReq(certReq);
 
-            if (digestMethod == DigestMethod.SHA1)
-            {
-                digestAlg = TspAlgorithms.Sha1;
-            }
-            else if (digestMethod == DigestMethod.SHA256)
-            {
-                digestAlg = TspAlgorithms.Sha256;
-            }
-            else
-            {
-                digestAlg = TspAlgorithms.Sha512;
-            }
-
-            TimeStampRequest tsr = tsrq.Generate(digestAlg, hash, BigInteger.ValueOf(100));
+            TimeStampRequest tsr = tsrq.Generate(digestMethod.Oid, hash, BigInteger.ValueOf(100));
             byte[] data = tsr.GetEncoded();
 
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(_url);
             req.Method = "POST";
             req.ContentType = "application/timestamp-query";
             req.ContentLength = data.Length;

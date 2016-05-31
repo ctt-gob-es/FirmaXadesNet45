@@ -22,6 +22,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 
 using FirmaXadesNet.Clients;
+using FirmaXadesNet.Parameters;
 using FirmaXadesNet.Utils;
 using Microsoft.Xades;
 using System;
@@ -33,26 +34,17 @@ using System.Threading.Tasks;
 
 namespace FirmaXadesNet.Upgraders
 {
-    class XadesTUpgrader : XadesUpgrader
+    class XadesTUpgrader : IXadesUpgrader
     {
-        #region Constructors
-
-        public XadesTUpgrader(FirmaXades firma)
-            : base(firma)
-        {
-
-        }
-
-        #endregion
 
         #region Public methods
 
-        public override void Upgrade()
+        public void Upgrade(FirmaXades firma, UpgradeParameters parameters)
         {
             TimeStamp signatureTimeStamp;
             ArrayList signatureValueElementXpaths;
             byte[] signatureValueHash;
-            UnsignedProperties unsignedProperties = _firma.XadesSignature.UnsignedProperties;
+            UnsignedProperties unsignedProperties = firma.XadesSignature.UnsignedProperties;
 
             try
             {
@@ -63,20 +55,20 @@ namespace FirmaXadesNet.Upgraders
 
                 signatureValueElementXpaths = new ArrayList();
                 signatureValueElementXpaths.Add("ds:SignatureValue");
-                signatureValueHash = DigestUtil.ComputeHashValue(XMLUtil.ComputeValueOfElementList(_firma.XadesSignature, signatureValueElementXpaths), DigestMethod.SHA1);
+                signatureValueHash = DigestUtil.ComputeHashValue(XMLUtil.ComputeValueOfElementList(firma.XadesSignature, signatureValueElementXpaths), parameters.DigestMethod);
 
-                byte[] tsa = TimeStampClient.GetTimeStamp(_firma.TSAServer, signatureValueHash, DigestMethod.SHA1, true);
+                byte[] tsa = parameters.TimeStampClient.GetTimeStamp(signatureValueHash, parameters.DigestMethod, true);
 
                 signatureTimeStamp = new TimeStamp("SignatureTimeStamp");
-                signatureTimeStamp.Id = "SignatureTimeStamp-" + _firma.XadesSignature.Signature.Id;
+                signatureTimeStamp.Id = "SignatureTimeStamp-" + firma.XadesSignature.Signature.Id;
                 signatureTimeStamp.EncapsulatedTimeStamp.PkiData = tsa;
                 signatureTimeStamp.EncapsulatedTimeStamp.Id = "SignatureTimeStamp-" + Guid.NewGuid().ToString();
 
                 unsignedProperties.UnsignedSignatureProperties.SignatureTimeStampCollection.Add(signatureTimeStamp);
 
-                _firma.XadesSignature.UnsignedProperties = unsignedProperties;
+                firma.XadesSignature.UnsignedProperties = unsignedProperties;
 
-                _firma.UpdateDocument();
+                firma.UpdateDocument();
             }
             catch (Exception ex)
             {

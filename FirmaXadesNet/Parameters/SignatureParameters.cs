@@ -1,7 +1,7 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// FrmSeleccionarFirma.cs
+// SignatureParameters.cs
 //
-// FirmaXadesNet - Librería la para generación de firmas XADES
+// FirmaXadesNet - Librería para la generación de firmas XADES
 // Copyright (C) 2016 Dpto. de Nuevas Tecnologías de la Dirección General de Urbanismo del Ayto. de Cartagena
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,47 +21,42 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
-using FirmaXadesNet;
+using FirmaXadesNet.Crypto;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
-namespace TestFirmaXades
+namespace FirmaXadesNet.Parameters
 {
-    public partial class FrmSeleccionarFirma : Form
+   
+    public class SignatureParameters
     {
-        private FirmaXades[] _firmas = null;
-        
-        public FirmaXades FirmaSeleccionada
+        #region Public properties
+
+        public X509Certificate2 SigningCertificate { get; set; }
+
+        public SignatureMethod SignatureMethod { get; set; }
+
+        public DigestMethod DigestMethod { get; set; }
+
+        public DateTime? SigningDate { get; set; }
+
+        public List<string> XPathTransformations { get; private set; }
+
+        public SignaturePolicyInfo SignaturePolicyInfo { get; set; }
+
+        public SignatureDestination SignatureDestination { get; set; }
+
+        #endregion
+
+        public SignatureParameters()
         {
-            get
-            {
-                return _firmas[lstFirmas.SelectedIndex];
-            }
-        }
-        
-        public FrmSeleccionarFirma(FirmaXades[] firmas)
-        {
-            InitializeComponent();
-
-            _firmas = firmas;
-
-            foreach (var firma in firmas)
-            {                
-                string textoFirma = string.Format("{0} - {1}",
-                    firma.XadesSignature.XadesObject.QualifyingProperties.SignedProperties.SignedSignatureProperties.SigningTime,
-                    firma.GetSigningCertificate().Subject);
-
-                lstFirmas.Items.Add(textoFirma);
-            }
-
-            lstFirmas.SelectedIndex = 0;
+            this.XPathTransformations = new List<string>();
+            this.SignatureMethod = SignatureMethod.RSAwithSHA256;
+            this.DigestMethod = DigestMethod.SHA256;
         }
     }
 }

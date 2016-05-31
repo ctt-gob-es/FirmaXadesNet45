@@ -1,7 +1,7 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// FrmSeleccionarFirma.cs
+// SignaturePolicyInfo.cs
 //
-// FirmaXadesNet - Librería la para generación de firmas XADES
+// FirmaXadesNet - Librería para la generación de firmas XADES
 // Copyright (C) 2016 Dpto. de Nuevas Tecnologías de la Dirección General de Urbanismo del Ayto. de Cartagena
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,47 +21,22 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
-using FirmaXadesNet;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
-namespace TestFirmaXades
+namespace FirmaXadesNet.Parameters
 {
-    public partial class FrmSeleccionarFirma : Form
+    public class SignaturePolicyInfo
     {
-        private FirmaXades[] _firmas = null;
-        
-        public FirmaXades FirmaSeleccionada
-        {
-            get
-            {
-                return _firmas[lstFirmas.SelectedIndex];
-            }
-        }
-        
-        public FrmSeleccionarFirma(FirmaXades[] firmas)
-        {
-            InitializeComponent();
+        public string PolicyIdentifier { get; set; }
 
-            _firmas = firmas;
+        public string PolicyHash { get; set; }
 
-            foreach (var firma in firmas)
-            {                
-                string textoFirma = string.Format("{0} - {1}",
-                    firma.XadesSignature.XadesObject.QualifyingProperties.SignedProperties.SignedSignatureProperties.SigningTime,
-                    firma.GetSigningCertificate().Subject);
+        public string PolicyDigestAlgorithm { get; set; }
 
-                lstFirmas.Items.Add(textoFirma);
-            }
-
-            lstFirmas.SelectedIndex = 0;
-        }
+        public string PolicyUri { get; set; }
     }
 }

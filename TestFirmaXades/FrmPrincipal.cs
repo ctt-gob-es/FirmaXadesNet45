@@ -33,6 +33,9 @@ using FirmaXadesNet;
 using System.Security.Cryptography.X509Certificates;
 using System.Xml;
 using System.IO;
+using FirmaXadesNet.Parameters;
+using FirmaXadesNet.Crypto;
+using FirmaXadesNet.Clients;
 
 namespace TestFirmaXades
 {
@@ -59,28 +62,43 @@ namespace TestFirmaXades
             }
         }
 
-        private void EstablecerPolitica()
+        private SignaturePolicyInfo ObtenerPolitica()
         {
-            _firmaXades.PolicyIdentifier = txtIdentificadorPolitica.Text;
-            _firmaXades.PolicyHash = txtHashPolitica.Text;
-            _firmaXades.PolicyUri = txtURIPolitica.Text;
+            SignaturePolicyInfo spi = new SignaturePolicyInfo();
+
+            spi.PolicyIdentifier = txtIdentificadorPolitica.Text;
+            spi.PolicyHash = txtHashPolitica.Text;
+            spi.PolicyUri = txtURIPolitica.Text;
+
+            return spi;
         }
 
-        private SignMethod ObtenerAlgoritmo()
+        private SignatureMethod ObtenerAlgoritmo()
         {
             if (cmbAlgoritmo.SelectedIndex == 0)
             {
-                return SignMethod.RSAwithSHA1;
+                return SignatureMethod.RSAwithSHA1;
             }
             else if (cmbAlgoritmo.SelectedIndex == 1)
             {
-                return SignMethod.RSAwithSHA256;
+                return SignatureMethod.RSAwithSHA256;
             }
             else
             {
-                return SignMethod.RSAwithSHA512;
+                return SignatureMethod.RSAwithSHA512;
             }
 
+        }
+
+        private SignatureParameters ObtenerParametrosFirma()
+        {
+            SignatureParameters parametros = new SignatureParameters();
+
+            parametros.SigningCertificate = _firmaXades.SelectCertificate();
+            parametros.SignatureMethod = ObtenerAlgoritmo();
+            parametros.SigningDate = DateTime.Now;
+
+            return parametros;
         }
 
         private void btnFirmar_Click(object sender, EventArgs e)
@@ -91,12 +109,14 @@ namespace TestFirmaXades
                 return;
             }
 
+            SignatureParameters parametros = ObtenerParametrosFirma();
+
             if (rbInternnallyDetached.Checked)
             {
 
                 string mimeType = MimeTypeInfo.GetMimeType(txtFichero.Text);
 
-                EstablecerPolitica();
+                parametros.SignaturePolicyInfo = ObtenerPolitica();
 
                 _firmaXades.SetContentInternallyDetached(txtFichero.Text, mimeType);
             }
@@ -108,10 +128,8 @@ namespace TestFirmaXades
             {
                 _firmaXades.SetContentEnveloped(txtFichero.Text);
             }
-
-            SignMethod tipoMetodoFirma = ObtenerAlgoritmo();
-
-            _firmaXades.Sign(_firmaXades.SelectCertificate(), tipoMetodoFirma);
+           
+            _firmaXades.Sign(parametros);
 
             MessageBox.Show("Firma completada, ahora puede Guardar la firma o ampliarla a Xades-T.", "Test firma XADES",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -120,11 +138,9 @@ namespace TestFirmaXades
 
         private void btnCoFirmar_Click(object sender, EventArgs e)
         {
-            EstablecerPolitica();
-
-            SignMethod tipoMetodoFirma = ObtenerAlgoritmo();
+            SignatureParameters parametros = ObtenerParametrosFirma();
             
-            _firmaXades.CoSign(_firmaXades.SelectCertificate(), tipoMetodoFirma);
+            _firmaXades.CoSign(parametros);
 
             MessageBox.Show("Firma completada correctamente.", "Test firma XADES",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -134,9 +150,11 @@ namespace TestFirmaXades
         {
             try
             {
-                _firmaXades.TSAServer = txtURLSellado.Text;
+                UpgradeParameters parametros = new UpgradeParameters();
 
-                _firmaXades.UpgradeToXadesT();
+                parametros.TimeStampClient = new TimeStampClient(txtURLSellado.Text);
+
+                _firmaXades.UpgradeToXadesT(parametros);
 
                 MessageBox.Show("Sello de tiempo aplicado correctamente.\nAhora puede Guardar la firma o ampliarla a Xades-XL", "Test firma XADES",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -151,11 +169,12 @@ namespace TestFirmaXades
         {
             try
             {
-                _firmaXades.TSAServer = txtURLSellado.Text;
+                UpgradeParameters parametros = new UpgradeParameters();
 
-                _firmaXades.AddOCSPServer(txtOCSP.Text);
+                parametros.TimeStampClient = new TimeStampClient(txtURLSellado.Text);
+                parametros.OCSPServers.Add(txtOCSP.Text);
 
-                _firmaXades.UpgradeToXadesXL();
+                _firmaXades.UpgradeToXadesXL(parametros);
 
                 MessageBox.Show("Firma ampliada correctamente a XADES-XL.", "Test firma XADES",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -206,11 +225,9 @@ namespace TestFirmaXades
 
         private void btnContraFirma_Click(object sender, EventArgs e)
         {
-            EstablecerPolitica();
+            SignatureParameters parametros = ObtenerParametrosFirma();
 
-            SignMethod tipoMetodoFirma = ObtenerAlgoritmo();
-
-            _firmaXades.CounterSign(_firmaXades.SelectCertificate(), tipoMetodoFirma);
+            _firmaXades.CounterSign(parametros);
 
             MessageBox.Show("Firma completada correctamente.", "Test firma XADES",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -232,9 +249,9 @@ namespace TestFirmaXades
 
             _firmaXades.SetContentInternallyDetached(txtFichero.Text, "hash/sha256");
 
-            SignMethod tipoMetodoFirma = ObtenerAlgoritmo();
+            SignatureParameters parametros = ObtenerParametrosFirma();
 
-            _firmaXades.Sign(_firmaXades.SelectCertificate(), tipoMetodoFirma);
+            _firmaXades.Sign(parametros);
 
             MessageBox.Show("Firma completada, ahora puede Guardar la firma o ampliarla a Xades-T.", "Test firma XADES",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
