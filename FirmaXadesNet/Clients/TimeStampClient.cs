@@ -35,12 +35,28 @@ namespace FirmaXadesNet.Clients
 {
     public class TimeStampClient
     {
+        #region Private variables
         private string _url;
+        private string _user;
+        private string _password;
+        #endregion
+
+        #region Constructors
 
         public TimeStampClient(string url)
         {
             _url = url;
         }
+
+        public TimeStampClient(string url, string user, string password)
+            : this(url)
+        {
+            _user = user;
+            _password = password;
+        }
+
+
+        #endregion
 
         #region Public methods
 
@@ -57,13 +73,21 @@ namespace FirmaXadesNet.Clients
             TimeStampRequestGenerator tsrq = new TimeStampRequestGenerator();
             tsrq.SetCertReq(certReq);
 
-            TimeStampRequest tsr = tsrq.Generate(digestMethod.Oid, hash, BigInteger.ValueOf(100));
+            BigInteger nonce = BigInteger.ValueOf(DateTime.Now.Ticks);
+
+            TimeStampRequest tsr = tsrq.Generate(digestMethod.Oid, hash, nonce);
             byte[] data = tsr.GetEncoded();
 
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(_url);
             req.Method = "POST";
             req.ContentType = "application/timestamp-query";
             req.ContentLength = data.Length;
+
+            if (!string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(_password))
+            {
+                string auth = string.Format("{0}:{1}", _user, _password);
+                req.Headers["Authorization"] = "Basic " + Convert.ToBase64String(UTF8Encoding.UTF8.GetBytes(auth));
+            }
 
             Stream reqStream = req.GetRequestStream();
             reqStream.Write(data, 0, data.Length);
