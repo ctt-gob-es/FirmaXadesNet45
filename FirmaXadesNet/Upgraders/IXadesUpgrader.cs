@@ -21,7 +21,8 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
-using FirmaXadesNet.Parameters;
+using FirmaXadesNet.Signature;
+using FirmaXadesNet.Upgraders.Parameters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,8 +31,8 @@ using System.Threading.Tasks;
 
 namespace FirmaXadesNet.Upgraders
 {
-    interface IXadesUpgrader
+    public interface IXadesUpgrader
     {
-        void Upgrade(FirmaXades firma, UpgradeParameters parameters);        
+        void Upgrade(SignatureDocument signatureDocument, UpgradeParameters parameters);        
     }
 }

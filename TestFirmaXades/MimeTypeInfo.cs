@@ -213,7 +213,7 @@ namespace TestFirmaXades
 
         public static string GetMimeType(string filename)
         {
-            string extension = Path.GetExtension(filename).Replace(".", string.Empty);
+            string extension = Path.GetExtension(filename).Replace(".", string.Empty).ToLower();
 
             if (_mimeTypes.Keys.Contains(extension))
             {

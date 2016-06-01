@@ -22,6 +22,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 
 using FirmaXadesNet;
+using FirmaXadesNet.Signature;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -36,9 +37,9 @@ namespace TestFirmaXades
 {
     public partial class FrmSeleccionarFirma : Form
     {
-        private FirmaXades[] _firmas = null;
-        
-        public FirmaXades FirmaSeleccionada
+        private SignatureDocument[] _firmas = null;
+
+        public SignatureDocument FirmaSeleccionada
         {
             get
             {
@@ -46,7 +47,7 @@ namespace TestFirmaXades
             }
         }
         
-        public FrmSeleccionarFirma(FirmaXades[] firmas)
+        public FrmSeleccionarFirma(SignatureDocument[] firmas)
         {
             InitializeComponent();
 

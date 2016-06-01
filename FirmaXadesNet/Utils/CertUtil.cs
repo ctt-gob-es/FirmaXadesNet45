@@ -31,7 +31,7 @@ using System.Threading.Tasks;
 
 namespace FirmaXadesNet.Utils
 {
-    class CertUtil
+    public class CertUtil
     {
         #region Public methods
 
@@ -55,37 +55,55 @@ namespace FirmaXadesNet.Utils
             return chain;
         }
 
-        public static Org.BouncyCastle.X509.X509Certificate ConvertToX509Certificate(X509Certificate2 cert)
+        /// <summary>
+        /// Selecciona un certificado del almacén de certificados
+        /// </summary>
+        /// <returns></returns>
+        public static X509Certificate2 SelectCertificate(string message = null, string title = null)
         {
-            return Org.BouncyCastle.Security.DotNetUtilities.FromX509Certificate(cert);
-        }
+            X509Certificate2 cert = null;
 
-        public static string HexToDecimal(string hex)
-        {
-            List<int> dec = new List<int> { 0 };
-
-            foreach (char c in hex)
+            try
             {
-                int carry = Convert.ToInt32(c.ToString(), 16);
+                // Open the store of personal certificates.
+                X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
 
-                for (int i = 0; i < dec.Count; ++i)
+                X509Certificate2Collection collection = (X509Certificate2Collection)store.Certificates;
+                X509Certificate2Collection fcollection = (X509Certificate2Collection)collection.Find(X509FindType.FindByTimeValid, DateTime.Now, false);
+
+                if (string.IsNullOrEmpty(message))
                 {
-                    int val = dec[i] * 16 + carry;
-                    dec[i] = val % 10;
-                    carry = val / 10;
+                    message = "Seleccione un certificado.";
                 }
 
-                while (carry > 0)
+                if (string.IsNullOrEmpty(title))
                 {
-                    dec.Add(carry % 10);
-                    carry /= 10;
+                    title = "Firmar archivo";
                 }
+
+                X509Certificate2Collection scollection = X509Certificate2UI.SelectFromCollection(fcollection, title, message, X509SelectionFlag.SingleSelection);
+
+                if (scollection != null && scollection.Count == 1)
+                {
+                    cert = scollection[0];
+
+                    if (cert.HasPrivateKey == false)
+                    {
+                        throw new Exception("El certificado no tiene asociada una clave privada.");
+                    }
+                }
+
+                store.Close();
+            }
+            catch (Exception)
+            {
+                throw new Exception("No se ha podido obtener la clave privada.");
             }
 
-            var chars = dec.Select(d => (char)('0' + d));
-            var cArr = chars.Reverse().ToArray();
-            return new string(cArr);
+            return cert;
         }
+
 
         #endregion
     }

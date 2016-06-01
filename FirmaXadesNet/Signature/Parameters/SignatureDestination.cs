@@ -1,5 +1,5 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// SignatureParameters.cs
+// SignatureDestination.cs
 //
 // FirmaXadesNet - Librería para la generación de firmas XADES
 // Copyright (C) 2016 Dpto. de Nuevas Tecnologías de la Dirección General de Urbanismo del Ayto. de Cartagena
@@ -21,42 +21,31 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
-using FirmaXadesNet.Crypto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FirmaXadesNet.Parameters
+namespace FirmaXadesNet.Signature.Parameters
 {
-   
-    public class SignatureParameters
+    public class SignatureDestination
     {
-        #region Public properties
+        private Dictionary<string, string> _namespaces;
+        
+        public string XPathElement { get; set; }
 
-        public X509Certificate2 SigningCertificate { get; set; }
-
-        public SignatureMethod SignatureMethod { get; set; }
-
-        public DigestMethod DigestMethod { get; set; }
-
-        public DateTime? SigningDate { get; set; }
-
-        public List<string> XPathTransformations { get; private set; }
-
-        public SignaturePolicyInfo SignaturePolicyInfo { get; set; }
-
-        public SignatureDestination SignatureDestination { get; set; }
-
-        #endregion
-
-        public SignatureParameters()
+        public Dictionary<string, string> Namespaces
         {
-            this.XPathTransformations = new List<string>();
-            this.SignatureMethod = SignatureMethod.RSAwithSHA256;
-            this.DigestMethod = DigestMethod.SHA256;
+            get
+            {
+                return _namespaces;
+            }
+        }
+
+        public SignatureDestination()
+        {
+            _namespaces = new Dictionary<string, string>();
         }
     }
 }

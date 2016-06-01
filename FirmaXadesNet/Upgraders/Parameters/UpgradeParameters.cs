@@ -31,7 +31,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FirmaXadesNet.Parameters
+namespace FirmaXadesNet.Upgraders.Parameters
 {
     public class UpgradeParameters
     {

@@ -22,7 +22,9 @@
 // --------------------------------------------------------------------------------------------------------------------
 
 using FirmaXadesNet;
-using FirmaXadesNet.Parameters;
+using FirmaXadesNet.Signature;
+using FirmaXadesNet.Signature.Parameters;
+using FirmaXadesNet.Utils;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -46,15 +48,13 @@ namespace DemoFirmaElemento
 
         private void btnFirmar_Click(object sender, EventArgs e)
         {
-            FirmaXades firmaXades = new FirmaXades();
-            SignatureParameters parametros = new SignatureParameters();
+            XadesServices xadesServices = new XadesServices();
+            SignatureParameters parametros = new SignatureParameters();            
 
             string ficheroXml = Application.StartupPath + "\\xsdBOE-A-2011-13169_ex_XAdES_Internally_detached.xml";
 
             XmlDocument documento = new XmlDocument();
             documento.Load(ficheroXml);
-
-            firmaXades.SetContentInternallyDetached(documento, "CONTENT-12ef114d-ac6c-4da3-8caf-50379ed13698", "text/xml");
 
             parametros.SignatureDestination = new SignatureDestination();                    
             parametros.SignatureDestination.Namespaces.Add("enidoc", "http://administracionelectronica.gob.es/ENI/XSD/v1.0/documento-e");
@@ -62,16 +62,23 @@ namespace DemoFirmaElemento
             parametros.SignatureDestination.Namespaces.Add("enids", "http://administracionelectronica.gob.es/ENI/XSD/v1.0/firma");
             parametros.SignatureDestination.Namespaces.Add("enifile", "http://administracionelectronica.gob.es/ENI/XSD/v1.0/documento-e/contenido");
             parametros.SignatureDestination.XPathElement = "enidoc:documento/enids:firmas/enids:firma/enids:ContenidoFirma/enids:FirmaConCertificado";
+            parametros.Packaging = SignaturePackaging.INTERNALLY_DETACHED;
+            parametros.ElementIdToSign = "CONTENT-12ef114d-ac6c-4da3-8caf-50379ed13698";
+            parametros.InputMimeType = "text/xml";
+            parametros.SigningCertificate = CertUtil.SelectCertificate();
 
-            parametros.SigningCertificate = firmaXades.SelectCertificate();
+            SignatureDocument documentoFirma;
 
-            firmaXades.Sign(parametros);
+            using (FileStream fs = new FileStream(ficheroXml, FileMode.Open))
+            {
+                documentoFirma = xadesServices.Sign(fs, parametros);
+            }
 
             if (saveFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 using (FileStream fs = new FileStream(saveFileDialog1.FileName, FileMode.Create))
                 {
-                    firmaXades.Save(fs);
+                    documentoFirma.Save(fs);
                 }
 
                 MessageBox.Show("Fichero guardado correctamente.");

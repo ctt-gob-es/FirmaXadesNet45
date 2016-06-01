@@ -27,7 +27,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FirmaXadesNet.Parameters
+namespace FirmaXadesNet.Signature.Parameters
 {
     public class SignaturePolicyInfo
     {
