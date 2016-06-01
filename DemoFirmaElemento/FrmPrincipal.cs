@@ -56,13 +56,13 @@ namespace DemoFirmaElemento
             XmlDocument documento = new XmlDocument();
             documento.Load(ficheroXml);
 
-            parametros.SignatureDestination = new SignatureDestination();                    
+            parametros.SignatureDestination = new SignatureXPathExpression();            
             parametros.SignatureDestination.Namespaces.Add("enidoc", "http://administracionelectronica.gob.es/ENI/XSD/v1.0/documento-e");
             parametros.SignatureDestination.Namespaces.Add("enidocmeta", "http://administracionelectronica.gob.es/ENI/XSD/v1.0/documento-e/metadatos");
             parametros.SignatureDestination.Namespaces.Add("enids", "http://administracionelectronica.gob.es/ENI/XSD/v1.0/firma");
             parametros.SignatureDestination.Namespaces.Add("enifile", "http://administracionelectronica.gob.es/ENI/XSD/v1.0/documento-e/contenido");
-            parametros.SignatureDestination.XPathElement = "enidoc:documento/enids:firmas/enids:firma/enids:ContenidoFirma/enids:FirmaConCertificado";
-            parametros.Packaging = SignaturePackaging.INTERNALLY_DETACHED;
+            parametros.SignatureDestination.XPathExpression = "enidoc:documento/enids:firmas/enids:firma/enids:ContenidoFirma/enids:FirmaConCertificado";
+            parametros.SignaturePackaging = SignaturePackaging.INTERNALLY_DETACHED;
             parametros.ElementIdToSign = "CONTENT-12ef114d-ac6c-4da3-8caf-50379ed13698";
             parametros.InputMimeType = "text/xml";
             parametros.SigningCertificate = CertUtil.SelectCertificate();

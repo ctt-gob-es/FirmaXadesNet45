@@ -59,10 +59,10 @@ namespace FirmaXadesNet
     {
 
         #region Private variables
+
         private RSACryptoServiceProvider _rsaKey;
         private string _mimeType;
         private string _objectReference;
-
         private bool _disposeCryptoProvider;
 
         #endregion
@@ -74,24 +74,24 @@ namespace FirmaXadesNet
         /// <summary>
         /// Realiza el proceso de firmado
         /// </summary>
-        /// <param name="certificate"></param>
-        /// <param name="signMethod"></param>
+        /// <param name="input"></param>
+        /// <param name="parameters"></param>
         public SignatureDocument Sign(Stream input, SignatureParameters parameters)
         {           
             if (parameters.SigningCertificate == null)
             {
-                throw new NullReferenceException("Es necesario un certificado válido para la firma.");
+                throw new Exception("Es necesario un certificado válido para la firma");
             }
 
             if (input == null && string.IsNullOrEmpty(parameters.ExternalContentUri))
             {
-                throw new NullReferenceException("No se ha especificado el contenido a firmar.");
+                throw new Exception("No se ha especificado ningún contenido a firmar");
             }
 
             SignatureDocument signatureDocument = new SignatureDocument();
             XmlDocument sourceDocument = null;
 
-            switch (parameters.Packaging)
+            switch (parameters.SignaturePackaging)
             {
                 case SignaturePackaging.INTERNALLY_DETACHED:
                     if (string.IsNullOrEmpty(parameters.InputMimeType))
@@ -108,7 +108,6 @@ namespace FirmaXadesNet
                     }
                     else
                     {
-
                         SetContentInternallyDetached(signatureDocument, input, parameters.InputMimeType);
                     }
                     break;
@@ -146,15 +145,15 @@ namespace FirmaXadesNet
         /// <summary>
         /// Añade una firma al documento
         /// </summary>
-        /// <param name="certificate"></param>
-        /// <param name="signMethod"></param>
+        /// <param name="sigDocument"></param>
+        /// <param name="parameters"></param>
         public SignatureDocument CoSign(SignatureDocument sigDocument, SignatureParameters parameters)
         {
             Reference refContent = sigDocument.XadesSignature.SignedInfo.References[0] as Reference;
 
             if (refContent == null)
             {
-                throw new Exception("No se ha podido encontrar la referencia del contenido firmado.");
+                throw new NullReferenceException("No se ha podido encontrar la referencia del contenido firmado.");
             }
 
             if (sigDocument.XadesSignature.XadesObject.QualifyingProperties.SignedProperties.SignedDataObjectProperties.DataObjectFormatCollection.Count > 0)
@@ -208,8 +207,8 @@ namespace FirmaXadesNet
         /// <summary>
         /// Realiza la contrafirma de la firma actual
         /// </summary>
-        /// <param name="certificate"></param>
-        /// <param name="signMethod"></param>
+        /// <param name="sigDocument"></param>
+        /// <param name="parameters"></param>
         public SignatureDocument CounterSign(SignatureDocument sigDocument, SignatureParameters parameters)
         {            
             if (parameters.SigningCertificate == null)
@@ -262,6 +261,8 @@ namespace FirmaXadesNet
                 signReference.DigestMethod = parameters.DigestMethod.URI;
             }
 
+            counterSignature.SignedInfo.SignatureMethod = parameters.SignatureMethod.URI;
+
             counterSignature.AddXadesNamespace = true;
             counterSignature.ComputeSignature();
 
@@ -279,8 +280,7 @@ namespace FirmaXadesNet
 
         #endregion
 
-        #region Guardado y carga de firma
-
+        #region Carga de firmas
 
         /// <summary>
         /// Carga un archivo de firma.
@@ -536,7 +536,7 @@ namespace FirmaXadesNet
         /// </summary>
         /// <param name="elementXPath"></param>
         /// <param name="namespaces"></param>
-        private void SetSignatureDestination(SignatureDocument sigDocument, SignatureDestination destination)
+        private void SetSignatureDestination(SignatureDocument sigDocument, SignatureXPathExpression destination)
         {
             XmlNode nodo;
 
@@ -548,11 +548,11 @@ namespace FirmaXadesNet
                     xmlnsMgr.AddNamespace(item.Key, item.Value);
                 }
 
-                nodo = sigDocument.Document.SelectSingleNode(destination.XPathElement, xmlnsMgr);
+                nodo = sigDocument.Document.SelectSingleNode(destination.XPathExpression, xmlnsMgr);
             }
             else
             {
-                nodo = sigDocument.Document.SelectSingleNode(destination.XPathElement);
+                nodo = sigDocument.Document.SelectSingleNode(destination.XPathExpression);
             }
 
             if (nodo == null)
@@ -593,7 +593,7 @@ namespace FirmaXadesNet
         /// Añade una transformación XPath al contenido a firmar
         /// </summary>
         /// <param name="XPathString"></param>
-        private void AddXPathTransform(SignatureDocument sigDocument, string XPathString)
+        private void AddXPathTransform(SignatureDocument sigDocument, Dictionary<string, string> namespaces, string XPathString)
         {
             XmlDocument document;
 
@@ -607,10 +607,20 @@ namespace FirmaXadesNet
             }
 
             XmlElement xPathElem = document.CreateElement("XPath");
+
+            foreach (var ns in namespaces)
+            {
+                var attr = document.CreateAttribute("xmlns:" + ns.Key);
+                attr.Value = ns.Value;
+
+                xPathElem.Attributes.Append(attr);
+            }
+            
             xPathElem.InnerText = XPathString;
 
             XmlDsigXPathTransform transform = new XmlDsigXPathTransform();
-            transform.LoadInnerXml(xPathElem.SelectNodes("."));
+            
+            transform.LoadInnerXml(xPathElem.SelectNodes("."));            
 
             Reference reference = sigDocument.XadesSignature.SignedInfo.References[0] as Reference;
 
@@ -668,7 +678,7 @@ namespace FirmaXadesNet
             {
                 foreach (var xPathTrans in parameters.XPathTransformations)
                 {
-                    AddXPathTransform(signatureDocument, xPathTrans);
+                    AddXPathTransform(signatureDocument, xPathTrans.Namespaces, xPathTrans.XPathExpression);
                 }
             }
         }

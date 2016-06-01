@@ -92,9 +92,7 @@ namespace FirmaXadesNet.Signature
         {
             this.Document.Save(output);
         }
-
-
-
+        
         #endregion
 
         #region Public methods

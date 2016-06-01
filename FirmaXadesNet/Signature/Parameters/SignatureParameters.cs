@@ -51,13 +51,13 @@ namespace FirmaXadesNet.Signature.Parameters
 
         public DateTime? SigningDate { get; set; }
 
-        public List<string> XPathTransformations { get; private set; }
+        public List<SignatureXPathExpression> XPathTransformations { get; private set; }
 
         public SignaturePolicyInfo SignaturePolicyInfo { get; set; }
 
-        public SignatureDestination SignatureDestination { get; set; }
+        public SignatureXPathExpression SignatureDestination { get; set; }
 
-        public SignaturePackaging Packaging { get; set; }
+        public SignaturePackaging SignaturePackaging { get; set; }
 
         public string InputMimeType { get; set; }
 
@@ -69,7 +69,7 @@ namespace FirmaXadesNet.Signature.Parameters
 
         public SignatureParameters()
         {
-            this.XPathTransformations = new List<string>();
+            this.XPathTransformations = new List<SignatureXPathExpression>();
             this.SignatureMethod = SignatureMethod.RSAwithSHA256;
             this.DigestMethod = DigestMethod.SHA256;
         }

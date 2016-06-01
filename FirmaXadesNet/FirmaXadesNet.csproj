@@ -50,7 +50,7 @@
     <Compile Include="Crypto\SignatureMethod.cs" />
     <Compile Include="XadesServices.cs" />
     <Compile Include="Clients\OcspClient.cs" />
-    <Compile Include="Signature\Parameters\SignatureDestination.cs" />
+    <Compile Include="Signature\Parameters\SignatureXPathExpression.cs" />
     <Compile Include="Signature\Parameters\SignatureParameters.cs" />
     <Compile Include="Signature\Parameters\SignaturePolicyInfo.cs" />
     <Compile Include="Upgraders\Parameters\UpgradeParameters.cs" />

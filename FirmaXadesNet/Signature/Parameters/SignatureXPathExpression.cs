@@ -29,11 +29,11 @@ using System.Threading.Tasks;
 
 namespace FirmaXadesNet.Signature.Parameters
 {
-    public class SignatureDestination
+    public class SignatureXPathExpression
     {
         private Dictionary<string, string> _namespaces;
         
-        public string XPathElement { get; set; }
+        public string XPathExpression { get; set; }
 
         public Dictionary<string, string> Namespaces
         {
@@ -43,7 +43,7 @@ namespace FirmaXadesNet.Signature.Parameters
             }
         }
 
-        public SignatureDestination()
+        public SignatureXPathExpression()
         {
             _namespaces = new Dictionary<string, string>();
         }

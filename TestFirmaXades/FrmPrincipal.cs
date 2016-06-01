@@ -118,20 +118,20 @@ namespace TestFirmaXades
             if (rbInternnallyDetached.Checked)
             {
                 parametros.SignaturePolicyInfo = ObtenerPolitica();
-                parametros.Packaging = SignaturePackaging.INTERNALLY_DETACHED;
+                parametros.SignaturePackaging = SignaturePackaging.INTERNALLY_DETACHED;
                 parametros.InputMimeType = MimeTypeInfo.GetMimeType(txtFichero.Text);
             }
             else if (rbExternallyDetached.Checked)
             {
-                parametros.Packaging = SignaturePackaging.EXTERNALLY_DETACHED;
+                parametros.SignaturePackaging = SignaturePackaging.EXTERNALLY_DETACHED;
                 parametros.ExternalContentUri = txtFichero.Text;
             }
             else if (rbEnveloped.Checked)
             {
-                parametros.Packaging = SignaturePackaging.ENVELOPED;
+                parametros.SignaturePackaging = SignaturePackaging.ENVELOPED;
             }
 
-            if (parametros.Packaging != SignaturePackaging.EXTERNALLY_DETACHED)
+            if (parametros.SignaturePackaging != SignaturePackaging.EXTERNALLY_DETACHED)
             {
                 using (FileStream fs = new FileStream(txtFichero.Text, FileMode.Open))
                 {
@@ -262,7 +262,7 @@ namespace TestFirmaXades
             }                        
 
             SignatureParameters parametros = ObtenerParametrosFirma();
-            parametros.Packaging = SignaturePackaging.INTERNALLY_DETACHED;
+            parametros.SignaturePackaging = SignaturePackaging.INTERNALLY_DETACHED;
             parametros.InputMimeType = "hash/sha256";
 
             using(FileStream fs = new FileStream(txtFichero.Text, FileMode.Open))

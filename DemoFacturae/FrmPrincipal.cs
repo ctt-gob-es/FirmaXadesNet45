@@ -56,7 +56,7 @@ namespace DemoFacturae
             parametros.SignaturePolicyInfo = new SignaturePolicyInfo();
             parametros.SignaturePolicyInfo.PolicyIdentifier = "http://www.facturae.es/politica_de_firma_formato_facturae/politica_de_firma_formato_facturae_v3_1.pdf";
             parametros.SignaturePolicyInfo.PolicyHash = "Ohixl6upD6av8N7pEvDABhEL6hM=";
-            parametros.Packaging = SignaturePackaging.ENVELOPED;
+            parametros.SignaturePackaging = SignaturePackaging.ENVELOPED;
             parametros.InputMimeType = "text/xml";
 
             parametros.SigningCertificate = FirmaXadesNet.Utils.CertUtil.SelectCertificate();
