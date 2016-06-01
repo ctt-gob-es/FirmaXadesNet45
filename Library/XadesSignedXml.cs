@@ -1696,7 +1696,10 @@ namespace Microsoft.Xades
                     }
                 }
 
-                CanonicalXmlNodeList_Add.Invoke(refList, new object[] { xmlDoc.DocumentElement });
+                if (xmlDoc != null)
+                {
+                    CanonicalXmlNodeList_Add.Invoke(refList, new object[] { xmlDoc.DocumentElement });
+                }                
 
                 Reference_UpdateHashValue.Invoke(reference2, new object[] { xmlDoc, refList });
 

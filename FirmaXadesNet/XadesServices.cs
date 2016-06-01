@@ -89,7 +89,6 @@ namespace FirmaXadesNet
             }
 
             SignatureDocument signatureDocument = new SignatureDocument();
-            XmlDocument sourceDocument = null;
 
             switch (parameters.SignaturePackaging)
             {
@@ -100,11 +99,8 @@ namespace FirmaXadesNet
                     }
 
                     if (!string.IsNullOrEmpty(parameters.ElementIdToSign))
-                    {
-                        sourceDocument = new XmlDocument();
-                        sourceDocument.Load(input);
-
-                        SetContentInternallyDetached(signatureDocument, sourceDocument, parameters.ElementIdToSign, parameters.InputMimeType);
+                    {                       
+                        SetContentInternallyDetached(signatureDocument, XMLUtil.LoadDocument(input), parameters.ElementIdToSign, parameters.InputMimeType);
                     }
                     else
                     {
@@ -113,17 +109,11 @@ namespace FirmaXadesNet
                     break;
 
                 case SignaturePackaging.ENVELOPED:
-                    sourceDocument = new XmlDocument();
-                    sourceDocument.Load(input);
-
-                    SetContentEnveloped(signatureDocument, sourceDocument);
+                    SetContentEnveloped(signatureDocument, XMLUtil.LoadDocument(input));
                     break;
 
                 case SignaturePackaging.ENVELOPING:
-                    sourceDocument = new XmlDocument();
-                    sourceDocument.Load(input);
-
-                    SetContentEveloping(signatureDocument, sourceDocument);
+                    SetContentEveloping(signatureDocument, XMLUtil.LoadDocument(input));
                     break;
 
                 case SignaturePackaging.EXTERNALLY_DETACHED:
@@ -573,9 +563,9 @@ namespace FirmaXadesNet
             Reference reference = new Reference();
 
             sigDocument.Document = new XmlDocument();
-            sigDocument.XadesSignature = new XadesSignedXml();
+            sigDocument.XadesSignature = new XadesSignedXml(sigDocument.Document);
 
-            reference.Uri = "file://" + fileName.Replace("\\", "/");
+            reference.Uri = new Uri(fileName).AbsoluteUri;
             reference.Id = "Reference-" + Guid.NewGuid().ToString();
 
             if (reference.Uri.EndsWith(".xml") || reference.Uri.EndsWith(".XML"))
@@ -657,28 +647,28 @@ namespace FirmaXadesNet
             sigDocument.XadesSignature.AddReference(reference);
         }
 
-        private void PrepareSignature(SignatureDocument signatureDocument, SignatureParameters parameters)
+        private void PrepareSignature(SignatureDocument sigDocument, SignatureParameters parameters)
         {
-            AddCertificateInfo(signatureDocument, parameters);
-            AddXadesInfo(signatureDocument, parameters);
+            AddCertificateInfo(sigDocument, parameters);
+            AddXadesInfo(sigDocument, parameters);
 
-            foreach (Reference reference in signatureDocument.XadesSignature.SignedInfo.References)
+            foreach (Reference reference in sigDocument.XadesSignature.SignedInfo.References)
             {
                 reference.DigestMethod = parameters.DigestMethod.URI;
             }
 
-            signatureDocument.XadesSignature.SignedInfo.SignatureMethod = parameters.SignatureMethod.URI;
+            sigDocument.XadesSignature.SignedInfo.SignatureMethod = parameters.SignatureMethod.URI;
 
             if (parameters.SignatureDestination != null)
             {
-                SetSignatureDestination(signatureDocument, parameters.SignatureDestination);
+                SetSignatureDestination(sigDocument, parameters.SignatureDestination);
             }
 
             if (parameters.XPathTransformations.Count > 0)
             {
                 foreach (var xPathTrans in parameters.XPathTransformations)
                 {
-                    AddXPathTransform(signatureDocument, xPathTrans.Namespaces, xPathTrans.XPathExpression);
+                    AddXPathTransform(sigDocument, xPathTrans.Namespaces, xPathTrans.XPathExpression);
                 }
             }
         }

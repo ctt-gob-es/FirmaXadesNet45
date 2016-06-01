@@ -113,6 +113,19 @@ namespace FirmaXadesNet.Utils
         }
 
         /// <summary>
+        /// Carga un documento XML
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static XmlDocument LoadDocument(Stream input)
+        {
+            XmlDocument document = new XmlDocument();
+            document.Load(input);
+
+            return document;
+        }
+
+        /// <summary>
         /// Actualiza el documento resultante
         /// </summary>
         public static void UpdateDocument(SignatureDocument sigDocument)
