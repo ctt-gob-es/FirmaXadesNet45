@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="Crypto\DigestMethod.cs" />
     <Compile Include="Crypto\SignatureMethod.cs" />
+    <Compile Include="Upgraders\XadesUpgrader.cs" />
     <Compile Include="XadesServices.cs" />
     <Compile Include="Clients\OcspClient.cs" />
     <Compile Include="Signature\Parameters\SignatureXPathExpression.cs" />

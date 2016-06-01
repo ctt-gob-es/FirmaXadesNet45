@@ -44,7 +44,7 @@ using System.Xml;
 
 namespace FirmaXadesNet.Upgraders
 {
-    public class XadesXLUpgrader : IXadesUpgrader
+    class XadesXLUpgrader : IXadesUpgrader
     {
               
         #region Public methods

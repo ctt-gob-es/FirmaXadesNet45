@@ -35,7 +35,7 @@ using System.Threading.Tasks;
 
 namespace FirmaXadesNet.Upgraders
 {
-    public class XadesTUpgrader : IXadesUpgrader
+    class XadesTUpgrader : IXadesUpgrader
     {
 
         #region Public methods

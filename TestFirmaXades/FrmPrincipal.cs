@@ -158,27 +158,7 @@ namespace TestFirmaXades
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void btnXadesT_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                UpgradeParameters parametros = new UpgradeParameters();
-
-                parametros.TimeStampClient = new TimeStampClient(txtURLSellado.Text);
-
-                XadesTUpgrader upgrader = new XadesTUpgrader();
-                upgrader.Upgrade(_signatureDocument, parametros);
-
-                MessageBox.Show("Sello de tiempo aplicado correctamente.\nAhora puede Guardar la firma o ampliarla a Xades-XL", "Test firma XADES",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ha ocurrido un error ampliando la firma: " + ex.Message);
-            }
-        }
-
-        private void btnXadesXL_Click(object sender, EventArgs e)
+        private void AmpliarFirma(SignatureFormat formato)
         {
             try
             {
@@ -187,16 +167,26 @@ namespace TestFirmaXades
                 parametros.TimeStampClient = new TimeStampClient(txtURLSellado.Text);
                 parametros.OCSPServers.Add(txtOCSP.Text);
 
-                XadesXLUpgrader upgrader = new XadesXLUpgrader();
-                upgrader.Upgrade(_signatureDocument, parametros);
-
-                MessageBox.Show("Firma ampliada correctamente a XADES-XL.", "Test firma XADES",
+                XadesUpgrader upgrader = new XadesUpgrader();
+                upgrader.Upgrade(_signatureDocument, formato, parametros);
+              
+                MessageBox.Show("Firma ampliada correctamente", "Test firma XADES",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Ha ocurrido un error ampliando la firma: " + ex.Message);
             }
+        }
+
+        private void btnXadesT_Click(object sender, EventArgs e)
+        {
+            AmpliarFirma(SignatureFormat.XAdES_T);
+        }
+
+        private void btnXadesXL_Click(object sender, EventArgs e)
+        {
+            AmpliarFirma(SignatureFormat.XAdES_XL);
         }
 
         private void GuardarFirma()
