@@ -145,6 +145,7 @@ namespace FirmaXadesNet
 
             SignatureDocument coSignatureDocument = new SignatureDocument();
             coSignatureDocument.Document = (XmlDocument)sigDocument.Document.Clone();
+            coSignatureDocument.Document.PreserveWhitespace = true;
 
             coSignatureDocument.XadesSignature = new XadesSignedXml(coSignatureDocument.Document);
             coSignatureDocument.XadesSignature.LoadXml(sigDocument.XadesSignature.GetXml());
@@ -195,6 +196,8 @@ namespace FirmaXadesNet
 
             SignatureDocument counterSigDocument = new SignatureDocument();
             counterSigDocument.Document = (XmlDocument)sigDocument.Document.Clone();
+            counterSigDocument.Document.PreserveWhitespace = true;
+
             XadesSignedXml counterSignature = new XadesSignedXml(counterSigDocument.Document);
             SetSignatureId(counterSignature);
             
@@ -348,8 +351,7 @@ namespace FirmaXadesNet
         /// <param name="mimeType"></param>
         private void SetContentInternallyDetached(SignatureDocument sigDocument, XmlDocument xmlDocument, string elementId, string mimeType)
         {
-            sigDocument.Document = (XmlDocument)xmlDocument.Clone();
-            sigDocument.Document.PreserveWhitespace = true;
+            sigDocument.Document = xmlDocument;
 
             Reference reference = new Reference();
 
@@ -463,8 +465,7 @@ namespace FirmaXadesNet
         /// <param name="xmlDocument"></param>
         private void SetContentEnveloped(SignatureDocument sigDocument, XmlDocument xmlDocument)
         {
-            sigDocument.Document = (XmlDocument)xmlDocument.Clone();
-            sigDocument.Document.PreserveWhitespace = true;
+            sigDocument.Document = xmlDocument;
 
             CreateEnvelopedDocument(sigDocument);
         }
@@ -491,7 +492,7 @@ namespace FirmaXadesNet
             string dataObjectId = "DataObject-" + Guid.NewGuid().ToString();
             System.Security.Cryptography.Xml.DataObject dataObject = new System.Security.Cryptography.Xml.DataObject();
             dataObject.Data = doc.ChildNodes;
-            dataObject.Id = dataObjectId;
+            dataObject.Id = dataObjectId;            
             sigDocument.XadesSignature.AddObject(dataObject);
 
             reference.Id = "Reference-" + Guid.NewGuid().ToString();
