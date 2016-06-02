@@ -77,7 +77,14 @@ namespace FirmaXadesNet.Signature
 
         public X509Certificate2 GetSigningCertificate()
         {
+            CheckSignatureDocument(this);
+            
             XmlNode keyXml = _xadesSignedXml.KeyInfo.GetXml().GetElementsByTagName("X509Certificate", SignedXml.XmlDsigNamespaceUrl)[0];
+
+            if (keyXml == null)
+            {
+                throw new Exception("No se ha podido obtener el certificado de firma");
+            }
 
             return new X509Certificate2(Convert.FromBase64String(keyXml.InnerText));
         }
@@ -88,6 +95,8 @@ namespace FirmaXadesNet.Signature
         /// <param name="fileName"></param>
         public void Save(string fileName)
         {
+            CheckSignatureDocument(this);
+
             XmlWriterSettings settings = new XmlWriterSettings();
             settings.Encoding = new UTF8Encoding();
             using (var writer = XmlWriter.Create(fileName, settings))
@@ -103,6 +112,23 @@ namespace FirmaXadesNet.Signature
         public void Save(Stream output)
         {
             this.Document.Save(output);
+        }
+
+        #endregion
+
+        #region Private methods
+
+        internal static void CheckSignatureDocument(SignatureDocument sigDocument)
+        {
+            if (sigDocument == null)
+            {
+                throw new Exception("Se necesita un documento de firma válido");
+            }
+            
+            if (sigDocument.Document == null || sigDocument.XadesSignature == null)
+            {
+                throw new Exception("No existe información sobre la firma");
+            }
         }
 
         #endregion

@@ -122,11 +122,13 @@ namespace FirmaXadesNet
         /// <param name="parameters"></param>
         public SignatureDocument CoSign(SignatureDocument sigDocument, SignatureParameters parameters)
         {
+            SignatureDocument.CheckSignatureDocument(sigDocument);
+            
             Reference refContent = sigDocument.XadesSignature.SignedInfo.References[0] as Reference;
 
             if (refContent == null)
             {
-                throw new NullReferenceException("No se ha podido encontrar la referencia del contenido firmado.");
+                throw new Exception("No se ha podido encontrar la referencia del contenido firmado.");
             }
 
             if (sigDocument.XadesSignature.XadesObject.QualifyingProperties.SignedProperties.SignedDataObjectProperties.DataObjectFormatCollection.Count > 0)
@@ -188,6 +190,8 @@ namespace FirmaXadesNet
             {
                 throw new Exception("Es necesario un certificado válido para la firma.");
             }
+
+            SignatureDocument.CheckSignatureDocument(sigDocument);
 
             SignatureDocument counterSigDocument = new SignatureDocument();
             counterSigDocument.Document = (XmlDocument)sigDocument.Document.Clone();

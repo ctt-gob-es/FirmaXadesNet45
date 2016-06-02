@@ -46,6 +46,8 @@ namespace FirmaXadesNet.Upgraders
             XadesTUpgrader xadesTUpgrader = null;
             XadesXLUpgrader xadesXLUpgrader = null;
 
+            SignatureDocument.CheckSignatureDocument(sigDocument);
+
             if (toFormat == SignatureFormat.XAdES_T)
             {
                 xadesTUpgrader = new XadesTUpgrader();
