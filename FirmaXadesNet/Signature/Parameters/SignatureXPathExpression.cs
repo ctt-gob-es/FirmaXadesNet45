@@ -31,8 +31,14 @@ namespace FirmaXadesNet.Signature.Parameters
 {
     public class SignatureXPathExpression
     {
+        #region Private variables
+
         private Dictionary<string, string> _namespaces;
-        
+
+        #endregion
+
+        #region Public properties
+
         public string XPathExpression { get; set; }
 
         public Dictionary<string, string> Namespaces
@@ -43,9 +49,15 @@ namespace FirmaXadesNet.Signature.Parameters
             }
         }
 
+        #endregion
+
+        #region Constructors
+
         public SignatureXPathExpression()
         {
             _namespaces = new Dictionary<string, string>();
         }
+
+        #endregion
     }
 }

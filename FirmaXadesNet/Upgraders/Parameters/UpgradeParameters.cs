@@ -24,17 +24,15 @@
 using FirmaXadesNet.Clients;
 using FirmaXadesNet.Crypto;
 using Org.BouncyCastle.X509;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FirmaXadesNet.Upgraders.Parameters
 {
     public class UpgradeParameters
     {
+        #region Private variables
+
         private List<string> _ocspServers;
 
         private List<X509Crl> _crls;
@@ -42,6 +40,14 @@ namespace FirmaXadesNet.Upgraders.Parameters
         private DigestMethod _digestMethod;
 
         private TimeStampClient _timeStampClient;
+
+        private X509CrlParser _crlParser;
+
+        private DigestMethod _defaultDigestMethod = DigestMethod.SHA1;
+
+        #endregion
+
+        #region Public properties
 
         public List<string> OCSPServers
         {
@@ -51,7 +57,7 @@ namespace FirmaXadesNet.Upgraders.Parameters
             }
         }
 
-        public List<X509Crl> CRL
+        public IEnumerable<X509Crl> CRL
         {
             get
             {
@@ -85,20 +91,34 @@ namespace FirmaXadesNet.Upgraders.Parameters
             }
         }
 
+        #endregion
+
+        #region Constructors
 
         public UpgradeParameters()
         {
             _ocspServers = new List<string>();
             _crls = new List<X509Crl>();
-            _digestMethod = DigestMethod.SHA1;
+            _digestMethod = _defaultDigestMethod;
+            _crlParser = new X509CrlParser();
         }
 
+        #endregion
+
+        #region Public methods
+
         public void AddCRL(Stream stream)
-        {
-            Org.BouncyCastle.X509.X509CrlParser parser = new Org.BouncyCastle.X509.X509CrlParser();
-            var x509crl = parser.ReadCrl(stream);
+        {            
+            var x509crl = _crlParser.ReadCrl(stream);
 
             _crls.Add(x509crl);
         }
+
+        public void ClearCRL()
+        {
+            _crls.Clear();
+        }
+
+        #endregion
     }
 }

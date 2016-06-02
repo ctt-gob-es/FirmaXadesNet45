@@ -39,6 +39,8 @@ namespace FirmaXadesNet.Upgraders
 
     public class XadesUpgrader
     {
+        #region Public methods
+
         public void Upgrade(SignatureDocument sigDocument, SignatureFormat toFormat, UpgradeParameters parameters)
         {
             XadesTUpgrader xadesTUpgrader = null;
@@ -61,5 +63,7 @@ namespace FirmaXadesNet.Upgraders
                 xadesXLUpgrader.Upgrade(sigDocument, parameters);
             }
         }
+
+        #endregion
     }
 }

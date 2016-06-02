@@ -31,6 +31,8 @@ namespace FirmaXadesNet.Signature.Parameters
 {
     public class SignaturePolicyInfo
     {
+        #region Public properties
+
         public string PolicyIdentifier { get; set; }
 
         public string PolicyHash { get; set; }
@@ -38,5 +40,7 @@ namespace FirmaXadesNet.Signature.Parameters
         public string PolicyDigestAlgorithm { get; set; }
 
         public string PolicyUri { get; set; }
+
+        #endregion
     }
 }

@@ -21,17 +21,17 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Ocsp;
 using Org.BouncyCastle.X509;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
 
 namespace FirmaXadesNet.Clients
 {
@@ -39,13 +39,6 @@ namespace FirmaXadesNet.Clients
 
     class OcspClient
     {
-
-        #region Private variables
-
-        private int _bufferSize = 0x8000;
-
-        #endregion
-
         #region Public methods
 
         /// <summary>

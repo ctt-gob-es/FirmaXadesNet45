@@ -31,7 +31,7 @@ using System.Threading.Tasks;
 
 namespace FirmaXadesNet.Upgraders
 {
-    public interface IXadesUpgrader
+    interface IXadesUpgrader
     {
         void Upgrade(SignatureDocument signatureDocument, UpgradeParameters parameters);        
     }

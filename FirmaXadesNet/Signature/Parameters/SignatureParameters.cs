@@ -24,10 +24,7 @@
 using FirmaXadesNet.Crypto;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FirmaXadesNet.Signature.Parameters
 {
@@ -41,6 +38,13 @@ namespace FirmaXadesNet.Signature.Parameters
    
     public class SignatureParameters
     {
+        #region Private variables
+
+        private SignatureMethod _defaultSignatureMethod = SignatureMethod.RSAwithSHA256;
+        private DigestMethod _defaultDigestMethod = DigestMethod.SHA256;
+
+        #endregion
+
         #region Public properties
 
         public X509Certificate2 SigningCertificate { get; set; }
@@ -67,11 +71,15 @@ namespace FirmaXadesNet.Signature.Parameters
 
         #endregion
 
+        #region Constructors
+
         public SignatureParameters()
         {
             this.XPathTransformations = new List<SignatureXPathExpression>();
-            this.SignatureMethod = SignatureMethod.RSAwithSHA256;
-            this.DigestMethod = DigestMethod.SHA256;
+            this.SignatureMethod = _defaultSignatureMethod;
+            this.DigestMethod = _defaultDigestMethod;
         }
+
+        #endregion
     }
 }

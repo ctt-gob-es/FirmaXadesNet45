@@ -44,6 +44,7 @@ namespace FirmaXadesNet.Signature
         #endregion
 
         #region Public properties
+
         public XmlDocument Document
         {
             get
@@ -69,6 +70,17 @@ namespace FirmaXadesNet.Signature
                 _xadesSignedXml = value;
             }
         }
+        
+        #endregion
+
+        #region Public methods
+
+        public X509Certificate2 GetSigningCertificate()
+        {
+            XmlNode keyXml = _xadesSignedXml.KeyInfo.GetXml().GetElementsByTagName("X509Certificate", SignedXml.XmlDsigNamespaceUrl)[0];
+
+            return new X509Certificate2(Convert.FromBase64String(keyXml.InnerText));
+        }
 
         /// <summary>
         /// Guardar la firma en el fichero especificado.
@@ -91,17 +103,6 @@ namespace FirmaXadesNet.Signature
         public void Save(Stream output)
         {
             this.Document.Save(output);
-        }
-        
-        #endregion
-
-        #region Public methods
-
-        public X509Certificate2 GetSigningCertificate()
-        {
-            XmlNode keyXml = _xadesSignedXml.KeyInfo.GetXml().GetElementsByTagName("X509Certificate", SignedXml.XmlDsigNamespaceUrl)[0];
-
-            return new X509Certificate2(Convert.FromBase64String(keyXml.InnerText));
         }
 
         #endregion

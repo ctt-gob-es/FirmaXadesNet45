@@ -21,35 +21,18 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml;
-using System.Xml.Schema;
-using System.Xml.Serialization;
-using System.Security.Cryptography;
-using System.Security.Cryptography.Xml;
-using System.Security.Cryptography.X509Certificates;
-using Microsoft.Xades;
-using System.IO;
-using Org.BouncyCastle.Tsp;
-using System.Net;
-using Org.BouncyCastle.Math;
-using System.Collections;
-using FirmaXadesNet;
-using Org.BouncyCastle.Ocsp;
-using Org.BouncyCastle.X509.Store;
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Asn1.Ocsp;
-using Org.BouncyCastle.Asn1.Cmp;
-using Org.BouncyCastle.Asn1.X509;
-using System.Reflection;
-using FirmaXadesNet.Clients;
-using FirmaXadesNet.Utils;
-using FirmaXadesNet.Upgraders;
 using FirmaXadesNet.Signature;
 using FirmaXadesNet.Signature.Parameters;
+using FirmaXadesNet.Utils;
+using Microsoft.Xades;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography.Xml;
+using System.Xml;
 
 
 namespace FirmaXadesNet
@@ -733,6 +716,7 @@ namespace FirmaXadesNet
                 CspParameters parameters = (CspParameters)CspKeyContainerInfo_m_parameters.GetValue(key.CspKeyContainerInfo);
 
                 var cspparams = new CspParameters(providerType, providerName, key.CspKeyContainerInfo.KeyContainerName);
+                cspparams.KeyNumber = parameters.KeyNumber;
                 cspparams.Flags = parameters.Flags;
                 _rsaKey = new RSACryptoServiceProvider(cspparams);
 
