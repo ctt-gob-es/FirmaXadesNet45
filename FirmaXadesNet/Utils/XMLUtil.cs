@@ -92,18 +92,16 @@ namespace FirmaXadesNet.Utils
 
                     foreach (XmlNode xmlNode in searchXmlNodeList)
                     {
-                        XmlAttribute dsNamespace = xmlDocument.CreateAttribute("xmlns:" + XadesSignedXml.XmlDSigPrefix);
-                        dsNamespace.Value = XadesSignedXml.XmlDsigNamespaceUrl;
-                        xmlNode.Attributes.Append(dsNamespace);
-                       
+                        XmlElement clonedElement = (XmlElement)xmlNode.Clone();
+
+                        clonedElement.SetAttribute("xmlns:" + XadesSignedXml.XmlDSigPrefix, XadesSignedXml.XmlDsigNamespaceUrl);
+
                         foreach (var attr in namespaces)
                         {
-                            XmlAttribute attrNamespace = xmlDocument.CreateAttribute(attr.Name);
-                            attrNamespace.Value = attr.Value;
-                            xmlNode.Attributes.Append(attrNamespace);
+                            clonedElement.SetAttribute(attr.Name, attr.Value);
                         }
 
-                        byte[] canonicalizedElement = ApplyTransform((XmlElement)xmlNode, new XmlDsigC14NTransform());
+                        byte[] canonicalizedElement = ApplyTransform(clonedElement, new XmlDsigC14NTransform());
                         msResult.Write(canonicalizedElement, 0, canonicalizedElement.Length);
                     }
                 }
@@ -120,6 +118,7 @@ namespace FirmaXadesNet.Utils
         public static XmlDocument LoadDocument(Stream input)
         {
             XmlDocument document = new XmlDocument();
+            document.PreserveWhitespace = true;
             document.Load(input);
 
             return document;
