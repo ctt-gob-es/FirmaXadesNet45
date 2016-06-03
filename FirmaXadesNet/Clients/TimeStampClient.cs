@@ -21,15 +21,13 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Org.BouncyCastle.Tsp;
-using System.Net;
-using Org.BouncyCastle.Math;
-using System.IO;
 using FirmaXadesNet.Crypto;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Tsp;
+using System;
+using System.IO;
+using System.Net;
+using System.Text;
 
 namespace FirmaXadesNet.Clients
 {
@@ -86,7 +84,7 @@ namespace FirmaXadesNet.Clients
             if (!string.IsNullOrEmpty(_user) && !string.IsNullOrEmpty(_password))
             {
                 string auth = string.Format("{0}:{1}", _user, _password);
-                req.Headers["Authorization"] = "Basic " + Convert.ToBase64String(UTF8Encoding.UTF8.GetBytes(auth));
+                req.Headers["Authorization"] = "Basic " + Convert.ToBase64String(Encoding.Default.GetBytes(auth), Base64FormattingOptions.None);
             }
 
             Stream reqStream = req.GetRequestStream();
@@ -94,15 +92,22 @@ namespace FirmaXadesNet.Clients
             reqStream.Close();
 
             HttpWebResponse res = (HttpWebResponse)req.GetResponse();
-            if (res == null)
+            if (res.StatusCode != HttpStatusCode.OK)
             {
-                return null;
+                throw new Exception("El servidor ha devuelto una respuesta no válida");
             }
             else
             {
                 Stream resStream = new BufferedStream(res.GetResponseStream());
                 TimeStampResponse tsRes = new TimeStampResponse(resStream);
                 resStream.Close();
+
+                tsRes.Validate(tsr);
+
+                if (tsRes.TimeStampToken == null)
+                {
+                    throw new Exception("El servidor no ha devuelto ningún sello de tiempo");
+                }
 
                 return tsRes.TimeStampToken.GetEncoded();
             }
