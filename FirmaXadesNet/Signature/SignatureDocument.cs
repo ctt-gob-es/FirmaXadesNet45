@@ -23,13 +23,10 @@
 
 using Microsoft.Xades;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace FirmaXadesNet.Signature
@@ -89,6 +86,18 @@ namespace FirmaXadesNet.Signature
             return new X509Certificate2(Convert.FromBase64String(keyXml.InnerText));
         }
 
+        public byte[] GetDocumentBytes()
+        {
+            CheckSignatureDocument(this);
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                Save(ms);
+
+                return ms.ToArray();
+            }
+        }
+
         /// <summary>
         /// Guardar la firma en el fichero especificado.
         /// </summary>
@@ -111,7 +120,12 @@ namespace FirmaXadesNet.Signature
         /// <param name="output"></param>
         public void Save(Stream output)
         {
-            this.Document.Save(output);
+            XmlWriterSettings settings = new XmlWriterSettings();
+            settings.Encoding = new UTF8Encoding();
+            using (var writer = XmlWriter.Create(output, settings))
+            {
+                this.Document.Save(writer);
+            }
         }
 
         #endregion
