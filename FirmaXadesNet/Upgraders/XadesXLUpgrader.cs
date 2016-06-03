@@ -315,7 +315,7 @@ namespace FirmaXadesNet.Upgraders
             {
                 byte[] resp = ocsp.QueryBinary(clientCert, issuerCert, ocspUrl);
 
-                FirmaXadesNet.Clients.CertificateStatus status = ocsp.ProcessOcspResponse(clientCert, issuerCert, resp);
+                FirmaXadesNet.Clients.CertificateStatus status = ocsp.ProcessOcspResponse(resp);
 
                 if (status == FirmaXadesNet.Clients.CertificateStatus.Revoked)
                 {

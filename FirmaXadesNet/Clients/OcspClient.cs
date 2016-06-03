@@ -103,11 +103,9 @@ namespace FirmaXadesNet.Clients
         /// <summary>
         /// Procesa la respuesta del servidor OCSP y devuelve el estado del certificado
         /// </summary>
-        /// <param name="eeCert"></param>
-        /// <param name="issuerCert"></param>
         /// <param name="binaryResp"></param>
         /// <returns></returns>
-        public CertificateStatus ProcessOcspResponse(X509Certificate eeCert, X509Certificate issuerCert, byte[] binaryResp)
+        public CertificateStatus ProcessOcspResponse(byte[] binaryResp)
         {
             if (binaryResp.Length == 0)
             {
