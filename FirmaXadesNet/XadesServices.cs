@@ -111,7 +111,7 @@ namespace FirmaXadesNet
 
             ComputeSignature(signatureDocument);
 
-            XMLUtil.UpdateDocument(signatureDocument);
+            signatureDocument.UpdateDocument();
 
             return signatureDocument;
         }
@@ -181,7 +181,7 @@ namespace FirmaXadesNet
 
             ComputeSignature(coSignatureDocument);
 
-            XMLUtil.UpdateDocument(coSignatureDocument);
+            coSignatureDocument.UpdateDocument();
 
             return coSignatureDocument;
         }
@@ -261,7 +261,7 @@ namespace FirmaXadesNet
             unsignedProperties.UnsignedSignatureProperties.CounterSignatureCollection.Add(counterSignature);
             counterSigDocument.XadesSignature.UnsignedProperties = unsignedProperties;
 
-            XMLUtil.UpdateDocument(counterSigDocument);
+            counterSigDocument.UpdateDocument();
 
             return counterSigDocument;
         }
@@ -411,12 +411,10 @@ namespace FirmaXadesNet
             _mimeType = mimeType;
 
             XmlElement contentElement = sigDocument.Document.CreateElement("CONTENT");
-            contentElement.SetAttribute("MimeType", mimeType);
 
             if (mimeType == "text/xml")
             {
                 _encoding = "UTF-8";
-                contentElement.SetAttribute("Encoding", _encoding);
 
                 XmlDocument doc = new XmlDocument();
                 doc.PreserveWhitespace = true;
@@ -434,7 +432,6 @@ namespace FirmaXadesNet
                 _refContent.AddTransform(transform);
 
                 _encoding = transform.Algorithm;
-                contentElement.SetAttribute("Encoding", _encoding);
 
                 if (mimeType == "hash/sha256")
                 {
@@ -455,6 +452,9 @@ namespace FirmaXadesNet
             }
 
             contentElement.SetAttribute("Id", id);
+            contentElement.SetAttribute("MimeType", _mimeType);
+            contentElement.SetAttribute("Encoding", _encoding);
+
 
             rootElement.AppendChild(contentElement);
 
@@ -490,7 +490,7 @@ namespace FirmaXadesNet
 
             _refContent.Id = "Reference-" + Guid.NewGuid().ToString();
             _refContent.Uri = "#" + dataObjectId;
-            _refContent.Type = SignedXml.XmlDsigNamespaceUrl + "Object";
+            _refContent.Type = XadesSignedXml.XmlDsigObjectType; 
 
             XmlDsigC14NTransform transform = new XmlDsigC14NTransform();
             _refContent.AddTransform(transform);

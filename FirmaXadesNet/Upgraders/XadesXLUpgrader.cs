@@ -76,7 +76,7 @@ namespace FirmaXadesNet.Upgraders
 
             TimeStampCertRefs(signatureDocument, parameters);
 
-            XMLUtil.UpdateDocument(signatureDocument);
+            signatureDocument.UpdateDocument();
         }
 
         #endregion
@@ -423,7 +423,7 @@ namespace FirmaXadesNet.Upgraders
 
             if (xmlCompleteCertRefs == null)
             {
-                XMLUtil.UpdateDocument(signatureDocument);
+                signatureDocument.UpdateDocument();
             }
 
             signatureValueElementXpaths = new ArrayList();

@@ -21,17 +21,12 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
-using FirmaXadesNet.Clients;
-using FirmaXadesNet.Upgraders.Parameters;
 using FirmaXadesNet.Signature;
+using FirmaXadesNet.Upgraders.Parameters;
 using FirmaXadesNet.Utils;
 using Microsoft.Xades;
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FirmaXadesNet.Upgraders
 {
@@ -69,7 +64,7 @@ namespace FirmaXadesNet.Upgraders
 
                 signatureDocument.XadesSignature.UnsignedProperties = unsignedProperties;
 
-                XMLUtil.UpdateDocument(signatureDocument);
+                signatureDocument.UpdateDocument();
             }
             catch (Exception ex)
             {

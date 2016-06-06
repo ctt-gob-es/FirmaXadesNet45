@@ -21,6 +21,7 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
+using FirmaXadesNet.Utils;
 using Microsoft.Xades;
 using System;
 using System.IO;
@@ -131,6 +132,63 @@ namespace FirmaXadesNet.Signature
         #endregion
 
         #region Private methods
+
+        /// <summary>
+        /// Actualiza el documento resultante
+        /// </summary>
+        internal void UpdateDocument()
+        {
+            if (_document == null)
+            {
+                _document = new XmlDocument();
+            }
+
+            if (_document.DocumentElement != null)
+            {
+                XmlNode xmlNode = _document.SelectSingleNode("//*[@Id='" + _xadesSignedXml.Signature.Id + "']");
+
+                if (xmlNode != null)
+                {
+
+                    XmlNamespaceManager nm = new XmlNamespaceManager(_document.NameTable);
+                    nm.AddNamespace("xades", XadesSignedXml.XadesNamespaceUri);
+                    nm.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
+
+                    XmlNode xmlQPNode = xmlNode.SelectSingleNode("ds:Object/xades:QualifyingProperties", nm);
+                    XmlNode xmlUnsingedPropertiesNode = xmlNode.SelectSingleNode("ds:Object/xades:QualifyingProperties/xades:UnsignedProperties", nm);
+
+                    if (xmlUnsingedPropertiesNode != null)
+                    {
+                        xmlUnsingedPropertiesNode.InnerXml = _xadesSignedXml.XadesObject.QualifyingProperties.UnsignedProperties.GetXml().InnerXml;
+                    }
+                    else
+                    {
+                        xmlUnsingedPropertiesNode = _document.ImportNode(_xadesSignedXml.XadesObject.QualifyingProperties.UnsignedProperties.GetXml(), true);
+                        xmlQPNode.AppendChild(xmlUnsingedPropertiesNode);
+                    }
+
+                }
+                else
+                {
+                    XmlElement xmlSigned = _xadesSignedXml.GetXml();
+
+                    byte[] canonicalizedElement = XMLUtil.ApplyTransform(xmlSigned, new XmlDsigC14NTransform());
+
+                    XmlDocument doc = new XmlDocument();
+                    doc.PreserveWhitespace = true;
+                    doc.LoadXml(Encoding.UTF8.GetString(canonicalizedElement));
+
+                    XmlNode canonSignature = _document.ImportNode(doc.DocumentElement, true);
+
+                    _xadesSignedXml.GetSignatureElement().AppendChild(canonSignature);
+                }
+            }
+            else
+            {
+                _document.LoadXml(_xadesSignedXml.GetXml().OuterXml);
+            }
+        }
+
 
         internal static void CheckSignatureDocument(SignatureDocument sigDocument)
         {

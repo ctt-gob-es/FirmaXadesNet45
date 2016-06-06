@@ -21,24 +21,16 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
 using FirmaXadesNet;
-using System.Security.Cryptography.X509Certificates;
-using System.Xml;
-using System.IO;
-using FirmaXadesNet.Crypto;
 using FirmaXadesNet.Clients;
+using FirmaXadesNet.Crypto;
 using FirmaXadesNet.Signature;
 using FirmaXadesNet.Signature.Parameters;
 using FirmaXadesNet.Upgraders;
 using FirmaXadesNet.Upgraders.Parameters;
+using System;
+using System.IO;
+using System.Windows.Forms;
 
 namespace TestFirmaXades
 {
@@ -129,6 +121,10 @@ namespace TestFirmaXades
             else if (rbEnveloped.Checked)
             {
                 parametros.SignaturePackaging = SignaturePackaging.ENVELOPED;
+            }
+            else if (rbEnveloping.Checked)
+            {
+                parametros.SignaturePackaging = SignaturePackaging.ENVELOPING;
             }
 
             if (parametros.SignaturePackaging != SignaturePackaging.EXTERNALLY_DETACHED)

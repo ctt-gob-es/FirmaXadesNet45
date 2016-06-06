@@ -57,6 +57,7 @@
             this.label7 = new System.Windows.Forms.Label();
             this.cmbAlgoritmo = new System.Windows.Forms.ComboBox();
             this.btnFirmarHuella = new System.Windows.Forms.Button();
+            this.rbEnveloping = new System.Windows.Forms.RadioButton();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -73,6 +74,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.rbEnveloping);
             this.groupBox1.Controls.Add(this.btnSeleccionarFichero);
             this.groupBox1.Controls.Add(this.txtFichero);
             this.groupBox1.Controls.Add(this.label1);
@@ -88,7 +90,7 @@
             // 
             // btnSeleccionarFichero
             // 
-            this.btnSeleccionarFichero.Location = new System.Drawing.Point(425, 128);
+            this.btnSeleccionarFichero.Location = new System.Drawing.Point(425, 141);
             this.btnSeleccionarFichero.Name = "btnSeleccionarFichero";
             this.btnSeleccionarFichero.Size = new System.Drawing.Size(28, 23);
             this.btnSeleccionarFichero.TabIndex = 5;
@@ -98,7 +100,7 @@
             // 
             // txtFichero
             // 
-            this.txtFichero.Location = new System.Drawing.Point(13, 129);
+            this.txtFichero.Location = new System.Drawing.Point(13, 142);
             this.txtFichero.Name = "txtFichero";
             this.txtFichero.Size = new System.Drawing.Size(412, 20);
             this.txtFichero.TabIndex = 4;
@@ -106,7 +108,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(10, 112);
+            this.label1.Location = new System.Drawing.Point(10, 125);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(78, 13);
             this.label1.TabIndex = 3;
@@ -326,6 +328,16 @@
             this.btnFirmarHuella.UseVisualStyleBackColor = true;
             this.btnFirmarHuella.Click += new System.EventHandler(this.btnFirmarHuella_Click);
             // 
+            // rbEnveloping
+            // 
+            this.rbEnveloping.AutoSize = true;
+            this.rbEnveloping.Location = new System.Drawing.Point(13, 98);
+            this.rbEnveloping.Name = "rbEnveloping";
+            this.rbEnveloping.Size = new System.Drawing.Size(78, 17);
+            this.rbEnveloping.TabIndex = 6;
+            this.rbEnveloping.Text = "Enveloping";
+            this.rbEnveloping.UseVisualStyleBackColor = true;
+            // 
             // FrmPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -394,6 +406,7 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.ComboBox cmbAlgoritmo;
         private System.Windows.Forms.Button btnFirmarHuella;
+        private System.Windows.Forms.RadioButton rbEnveloping;
     }
 }
 

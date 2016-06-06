@@ -21,17 +21,13 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Microsoft.Xades;
+using System.Collections;
+using System.IO;
+using System.Security.Cryptography;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Xml;
-using System.IO;
-using System.Security.Cryptography.Xml;
-using System.Collections;
-using Microsoft.Xades;
-using System.Security.Cryptography;
-using FirmaXadesNet.Signature;
 
 namespace FirmaXadesNet.Utils
 {
@@ -123,63 +119,6 @@ namespace FirmaXadesNet.Utils
 
             return document;
         }
-
-        /// <summary>
-        /// Actualiza el documento resultante
-        /// </summary>
-        public static void UpdateDocument(SignatureDocument sigDocument)
-        {
-            if (sigDocument.Document == null)
-            {
-                sigDocument.Document = new XmlDocument();
-            }
-
-            if (sigDocument.Document.DocumentElement != null)
-            {
-                XmlNode xmlNode = sigDocument.Document.SelectSingleNode("//*[@Id='" + sigDocument.XadesSignature.Signature.Id + "']");
-
-                if (xmlNode != null)
-                {
-
-                    XmlNamespaceManager nm = new XmlNamespaceManager(sigDocument.Document.NameTable);
-                    nm.AddNamespace("xades", XadesSignedXml.XadesNamespaceUri);
-                    nm.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
-
-                    XmlNode xmlQPNode = xmlNode.SelectSingleNode("ds:Object/xades:QualifyingProperties", nm);
-                    XmlNode xmlUnsingedPropertiesNode = xmlNode.SelectSingleNode("ds:Object/xades:QualifyingProperties/xades:UnsignedProperties", nm);
-
-                    if (xmlUnsingedPropertiesNode != null)
-                    {
-                        xmlUnsingedPropertiesNode.InnerXml = sigDocument.XadesSignature.XadesObject.QualifyingProperties.UnsignedProperties.GetXml().InnerXml;
-                    }
-                    else
-                    {
-                        xmlUnsingedPropertiesNode = sigDocument.Document.ImportNode(sigDocument.XadesSignature.XadesObject.QualifyingProperties.UnsignedProperties.GetXml(), true);
-                        xmlQPNode.AppendChild(xmlUnsingedPropertiesNode);
-                    }
-
-                }
-                else
-                {
-                    XmlElement xmlSigned = sigDocument.XadesSignature.GetXml();
-
-                    byte[] canonicalizedElement = XMLUtil.ApplyTransform(xmlSigned, new XmlDsigC14NTransform());
-
-                    XmlDocument doc = new XmlDocument();
-                    doc.PreserveWhitespace = true;
-                    doc.LoadXml(Encoding.UTF8.GetString(canonicalizedElement));
-
-                    XmlNode canonSignature = sigDocument.Document.ImportNode(doc.DocumentElement, true);
-
-                    sigDocument.XadesSignature.GetSignatureElement().AppendChild(canonSignature);
-                }
-            }
-            else
-            {
-                sigDocument.Document.LoadXml(sigDocument.XadesSignature.GetXml().OuterXml);
-            }
-        }
-
 
         #endregion
     }
