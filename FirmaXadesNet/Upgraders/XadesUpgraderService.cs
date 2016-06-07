@@ -37,7 +37,7 @@ namespace FirmaXadesNet.Upgraders
         XAdES_XL
     }
 
-    public class XadesUpgrader
+    public class XadesUpgraderService
     {
         #region Public methods
 

@@ -38,7 +38,7 @@ using System.Xml;
 namespace FirmaXadesNet
 {
 
-    public class XadesServices : IDisposable
+    public class XadesService : IDisposable
     {
 
         #region Private variables
@@ -275,7 +275,7 @@ namespace FirmaXadesNet
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public static SignatureDocument[] Load(Stream input)
+        public SignatureDocument[] Load(Stream input)
         {
             XmlDocument xmlDocument = new XmlDocument();
             xmlDocument.PreserveWhitespace = true;
@@ -289,7 +289,7 @@ namespace FirmaXadesNet
         /// </summary>
         /// <param name="fileName"></param>
         /// <returns></returns>
-        public static SignatureDocument[] Load(string fileName)
+        public SignatureDocument[] Load(string fileName)
         {
             using (FileStream fs = new FileStream(fileName, FileMode.Open))
             {
@@ -301,7 +301,7 @@ namespace FirmaXadesNet
         /// Carga un archivo de firma.
         /// </summary>
         /// <param name="xmlDocument"></param>
-        public static SignatureDocument[] Load(XmlDocument xmlDocument)
+        public SignatureDocument[] Load(XmlDocument xmlDocument)
         {
             XmlNodeList signatureNodeList = xmlDocument.GetElementsByTagName("Signature", SignedXml.XmlDsigNamespaceUrl);
 
@@ -321,7 +321,7 @@ namespace FirmaXadesNet
 
                 firmas.Add(sigDocument);
             }
-
+            
             return firmas.ToArray();
         }
 
@@ -541,7 +541,7 @@ namespace FirmaXadesNet
         /// <param name="fileName"></param>
         private void SetContentExternallyDetached(SignatureDocument sigDocument, string fileName)
         {
-            Reference _refContent = new Reference();
+            _refContent = new Reference();
 
             sigDocument.Document = new XmlDocument();
             sigDocument.XadesSignature = new XadesSignedXml(sigDocument.Document);

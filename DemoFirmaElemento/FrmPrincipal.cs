@@ -48,7 +48,7 @@ namespace DemoFirmaElemento
 
         private void btnFirmar_Click(object sender, EventArgs e)
         {
-            XadesServices xadesServices = new XadesServices();
+            XadesService xadesService = new XadesService();
             SignatureParameters parametros = new SignatureParameters();            
 
             string ficheroXml = Application.StartupPath + "\\xsdBOE-A-2011-13169_ex_XAdES_Internally_detached.xml";
@@ -71,7 +71,7 @@ namespace DemoFirmaElemento
 
             using (FileStream fs = new FileStream(ficheroXml, FileMode.Open))
             {
-                documentoFirma = xadesServices.Sign(fs, parametros);
+                documentoFirma = xadesService.Sign(fs, parametros);
             }
 
             if (saveFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)

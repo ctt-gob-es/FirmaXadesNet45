@@ -36,7 +36,7 @@ namespace TestFirmaXades
 {
     public partial class FrmPrincipal : Form
     {
-        XadesServices _xadesServices = new XadesServices();
+        XadesService _xadesService = new XadesService();
         SignatureDocument _signatureDocument;
 
         public FrmPrincipal()
@@ -131,12 +131,12 @@ namespace TestFirmaXades
             {
                 using (FileStream fs = new FileStream(txtFichero.Text, FileMode.Open))
                 {
-                    _signatureDocument = _xadesServices.Sign(fs, parametros);
+                    _signatureDocument = _xadesService.Sign(fs, parametros);
                 }
             }
             else
             {
-                _signatureDocument = _xadesServices.Sign(null, parametros);
+                _signatureDocument = _xadesService.Sign(null, parametros);
             }
             
             MessageBox.Show("Firma completada, ahora puede Guardar la firma o ampliarla a Xades-T.", "Test firma XADES",
@@ -148,7 +148,7 @@ namespace TestFirmaXades
         {
             SignatureParameters parametros = ObtenerParametrosFirma();
 
-            _signatureDocument = _xadesServices.CoSign(_signatureDocument, parametros);
+            _signatureDocument = _xadesService.CoSign(_signatureDocument, parametros);
 
             MessageBox.Show("Firma completada correctamente.", "Test firma XADES",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -163,7 +163,7 @@ namespace TestFirmaXades
                 parametros.TimeStampClient = new TimeStampClient(txtURLSellado.Text);
                 parametros.OCSPServers.Add(txtOCSP.Text);
 
-                XadesUpgrader upgrader = new XadesUpgrader();
+                XadesUpgraderService upgrader = new XadesUpgraderService();
                 upgrader.Upgrade(_signatureDocument, formato, parametros);
               
                 MessageBox.Show("Firma ampliada correctamente", "Test firma XADES",
@@ -206,7 +206,7 @@ namespace TestFirmaXades
             {
                 using (FileStream fs = new FileStream(openFileDialog1.FileName, FileMode.Open))
                 {
-                    var firmas = XadesServices.Load(fs);
+                    var firmas = _xadesService.Load(fs);
 
                     FrmSeleccionarFirma frm = new FrmSeleccionarFirma(firmas);
 
@@ -227,7 +227,7 @@ namespace TestFirmaXades
         {
             SignatureParameters parametros = ObtenerParametrosFirma();
 
-            _signatureDocument = _xadesServices.CounterSign(_signatureDocument, parametros);
+            _signatureDocument = _xadesService.CounterSign(_signatureDocument, parametros);
 
             MessageBox.Show("Firma completada correctamente.", "Test firma XADES",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -253,7 +253,7 @@ namespace TestFirmaXades
 
             using(FileStream fs = new FileStream(txtFichero.Text, FileMode.Open))
             {
-                _signatureDocument = _xadesServices.Sign(fs, parametros);
+                _signatureDocument = _xadesService.Sign(fs, parametros);
             }            
 
             MessageBox.Show("Firma completada, ahora puede Guardar la firma o ampliarla a Xades-T.", "Test firma XADES",
