@@ -28,8 +28,10 @@ using FirmaXadesNet.Signature;
 using FirmaXadesNet.Signature.Parameters;
 using FirmaXadesNet.Upgraders;
 using FirmaXadesNet.Upgraders.Parameters;
+using FirmaXadesNet.Utils;
 using FirmaXadesNet.Validation;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 
@@ -37,7 +39,6 @@ namespace TestFirmaXades
 {
     public partial class FrmPrincipal : Form
     {
-        XadesService _xadesService = new XadesService();
         SignatureDocument _signatureDocument;
 
         public FrmPrincipal()
@@ -89,9 +90,7 @@ namespace TestFirmaXades
 
         private SignatureParameters ObtenerParametrosFirma()
         {
-            SignatureParameters parametros = new SignatureParameters();
-
-            parametros.SigningCertificate = FirmaXadesNet.Utils.CertUtil.SelectCertificate();
+            SignatureParameters parametros = new SignatureParameters();           
             parametros.SignatureMethod = ObtenerAlgoritmo();
             parametros.SigningDate = DateTime.Now;
 
@@ -106,6 +105,7 @@ namespace TestFirmaXades
                 return;
             }
 
+            XadesService xadesService = new XadesService();
             SignatureParameters parametros = ObtenerParametrosFirma();
 
             if (rbInternnallyDetached.Checked)
@@ -128,16 +128,19 @@ namespace TestFirmaXades
                 parametros.SignaturePackaging = SignaturePackaging.ENVELOPING;
             }
 
-            if (parametros.SignaturePackaging != SignaturePackaging.EXTERNALLY_DETACHED)
+            using (parametros.Signer = new Signer(CertUtil.SelectCertificate()))
             {
-                using (FileStream fs = new FileStream(txtFichero.Text, FileMode.Open))
+                if (parametros.SignaturePackaging != SignaturePackaging.EXTERNALLY_DETACHED)
                 {
-                    _signatureDocument = _xadesService.Sign(fs, parametros);
+                    using (FileStream fs = new FileStream(txtFichero.Text, FileMode.Open))
+                    {
+                        _signatureDocument = xadesService.Sign(fs, parametros);
+                    }
                 }
-            }
-            else
-            {
-                _signatureDocument = _xadesService.Sign(null, parametros);
+                else
+                {
+                    _signatureDocument = xadesService.Sign(null, parametros);
+                }
             }
             
             MessageBox.Show("Firma completada, ahora puede Guardar la firma o ampliarla a Xades-T.", "Test firma XADES",
@@ -148,8 +151,12 @@ namespace TestFirmaXades
         private void btnCoFirmar_Click(object sender, EventArgs e)
         {
             SignatureParameters parametros = ObtenerParametrosFirma();
+            XadesService xadesService = new XadesService();
 
-            _signatureDocument = _xadesService.CoSign(_signatureDocument, parametros);
+            using (parametros.Signer = new Signer(CertUtil.SelectCertificate()))
+            {                
+                _signatureDocument = xadesService.CoSign(_signatureDocument, parametros);
+            }
 
             MessageBox.Show("Firma completada correctamente.", "Test firma XADES",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -207,7 +214,9 @@ namespace TestFirmaXades
             {
                 using (FileStream fs = new FileStream(openFileDialog1.FileName, FileMode.Open))
                 {
-                    var firmas = _xadesService.Load(fs);
+                    XadesService xadesService = new XadesService();
+
+                    var firmas = xadesService.Load(fs);
 
                     FrmSeleccionarFirma frm = new FrmSeleccionarFirma(firmas);
 
@@ -215,11 +224,11 @@ namespace TestFirmaXades
                     {
                         _signatureDocument = frm.FirmaSeleccionada;
 
-                        ValidationResult result = _xadesService.Validate(_signatureDocument);
+                        ValidationResult result = xadesService.Validate(_signatureDocument);
 
                         if (!result.IsValid)
                         {
-                            MessageBox.Show(result.Message, "ERROR VALIDANDO LA FIRMA");
+                            MessageBox.Show(result.Message, "FIRMA NO VÁLIDA");
                         }
                     }
                     else
@@ -234,8 +243,12 @@ namespace TestFirmaXades
         private void btnContraFirma_Click(object sender, EventArgs e)
         {
             SignatureParameters parametros = ObtenerParametrosFirma();
+            XadesService xadesService = new XadesService();
 
-            _signatureDocument = _xadesService.CounterSign(_signatureDocument, parametros);
+            using (parametros.Signer = new Signer(CertUtil.SelectCertificate()))
+            {
+                _signatureDocument = xadesService.CounterSign(_signatureDocument, parametros);
+            }
 
             MessageBox.Show("Firma completada correctamente.", "Test firma XADES",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -253,7 +266,9 @@ namespace TestFirmaXades
             {
                 MessageBox.Show("Debe seleccionar un fichero para firmar.");
                 return;
-            }                        
+            }
+
+            XadesService xadesService = new XadesService();
 
             SignatureParameters parametros = ObtenerParametrosFirma();
             parametros.SignaturePackaging = SignaturePackaging.INTERNALLY_DETACHED;
@@ -261,12 +276,53 @@ namespace TestFirmaXades
 
             using(FileStream fs = new FileStream(txtFichero.Text, FileMode.Open))
             {
-                _signatureDocument = _xadesService.Sign(fs, parametros);
+                using (parametros.Signer = new Signer(CertUtil.SelectCertificate()))
+                {
+                    _signatureDocument = xadesService.Sign(fs, parametros);
+                }
             }            
 
             MessageBox.Show("Firma completada, ahora puede Guardar la firma o ampliarla a Xades-T.", "Test firma XADES",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
 
+        }
+
+        private void btnFirmaMavisa_Click(object sender, EventArgs e)
+        {
+            // Demostración de firma masiva
+
+            if (folderBrowserDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                DirectoryInfo dirInfo = new DirectoryInfo(folderBrowserDialog1.SelectedPath);
+                List<FileInfo> files = new List<FileInfo>(dirInfo.EnumerateFiles("*.pdf"));
+
+                if (files.Count == 0)
+                {
+                    MessageBox.Show("No se han encontrado documentos");
+                    return;
+                }
+
+                using (Signer signer = new Signer(CertUtil.SelectCertificate()))
+                {
+                    SignatureParameters sp = new SignatureParameters();
+                    sp.Signer = signer;
+                    sp.SignaturePackaging = SignaturePackaging.INTERNALLY_DETACHED;
+                    sp.InputMimeType = "application/pdf";
+                    sp.SignatureMethod = ObtenerAlgoritmo();
+                    sp.SignaturePolicyInfo = ObtenerPolitica();
+
+                    XadesService xadesService = new XadesService();
+
+                    foreach (var file in files)
+                    {
+                        SignatureDocument sigDocument = xadesService.Sign(file.OpenRead(), sp);
+
+                        sigDocument.Save(string.Format(@"{0}\{1}.{2}", folderBrowserDialog1.SelectedPath, Path.GetFileNameWithoutExtension(file.Name), "xsig"));
+                    }
+                }
+
+                MessageBox.Show("Proceso completado");
+            }
         }
 
     }

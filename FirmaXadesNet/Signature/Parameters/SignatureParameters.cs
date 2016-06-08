@@ -47,7 +47,7 @@ namespace FirmaXadesNet.Signature.Parameters
 
         #region Public properties
 
-        public X509Certificate2 SigningCertificate { get; set; }
+        public Signer Signer { get; set; }
 
         public SignatureMethod SignatureMethod { get; set; }
 

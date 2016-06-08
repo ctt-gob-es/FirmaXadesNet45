@@ -30,6 +30,7 @@
         {
             this.btnFirmar = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.rbEnveloping = new System.Windows.Forms.RadioButton();
             this.btnSeleccionarFichero = new System.Windows.Forms.Button();
             this.txtFichero = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
@@ -57,7 +58,8 @@
             this.label7 = new System.Windows.Forms.Label();
             this.cmbAlgoritmo = new System.Windows.Forms.ComboBox();
             this.btnFirmarHuella = new System.Windows.Forms.Button();
-            this.rbEnveloping = new System.Windows.Forms.RadioButton();
+            this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.btnFirmaMavisa = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -87,6 +89,16 @@
             this.groupBox1.TabIndex = 1;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Formato de firma";
+            // 
+            // rbEnveloping
+            // 
+            this.rbEnveloping.AutoSize = true;
+            this.rbEnveloping.Location = new System.Drawing.Point(13, 98);
+            this.rbEnveloping.Name = "rbEnveloping";
+            this.rbEnveloping.Size = new System.Drawing.Size(78, 17);
+            this.rbEnveloping.TabIndex = 6;
+            this.rbEnveloping.Text = "Enveloping";
+            this.rbEnveloping.UseVisualStyleBackColor = true;
             // 
             // btnSeleccionarFichero
             // 
@@ -186,7 +198,7 @@
             // 
             // btnXadesT
             // 
-            this.btnXadesT.Location = new System.Drawing.Point(210, 418);
+            this.btnXadesT.Location = new System.Drawing.Point(326, 446);
             this.btnXadesT.Name = "btnXadesT";
             this.btnXadesT.Size = new System.Drawing.Size(144, 23);
             this.btnXadesT.TabIndex = 6;
@@ -196,7 +208,7 @@
             // 
             // btnXadesXL
             // 
-            this.btnXadesXL.Location = new System.Drawing.Point(366, 418);
+            this.btnXadesXL.Location = new System.Drawing.Point(482, 446);
             this.btnXadesXL.Name = "btnXadesXL";
             this.btnXadesXL.Size = new System.Drawing.Size(134, 23);
             this.btnXadesXL.TabIndex = 7;
@@ -206,7 +218,7 @@
             // 
             // btnGuardarFirma
             // 
-            this.btnGuardarFirma.Location = new System.Drawing.Point(516, 417);
+            this.btnGuardarFirma.Location = new System.Drawing.Point(519, 395);
             this.btnGuardarFirma.Name = "btnGuardarFirma";
             this.btnGuardarFirma.Size = new System.Drawing.Size(97, 23);
             this.btnGuardarFirma.TabIndex = 8;
@@ -216,7 +228,7 @@
             // 
             // btnCargarFirma
             // 
-            this.btnCargarFirma.Location = new System.Drawing.Point(516, 373);
+            this.btnCargarFirma.Location = new System.Drawing.Point(519, 364);
             this.btnCargarFirma.Name = "btnCargarFirma";
             this.btnCargarFirma.Size = new System.Drawing.Size(97, 23);
             this.btnCargarFirma.TabIndex = 9;
@@ -264,7 +276,7 @@
             // 
             this.txtHashPolitica.Location = new System.Drawing.Point(277, 266);
             this.txtHashPolitica.Name = "txtHashPolitica";
-            this.txtHashPolitica.Size = new System.Drawing.Size(266, 20);
+            this.txtHashPolitica.Size = new System.Drawing.Size(339, 20);
             this.txtHashPolitica.TabIndex = 14;
             this.txtHashPolitica.Text = "V8lVVNGDCPen6VELRD1Ja8HARFk=";
             // 
@@ -281,7 +293,7 @@
             // 
             this.txtURIPolitica.Location = new System.Drawing.Point(16, 321);
             this.txtURIPolitica.Name = "txtURIPolitica";
-            this.txtURIPolitica.Size = new System.Drawing.Size(423, 20);
+            this.txtURIPolitica.Size = new System.Drawing.Size(600, 20);
             this.txtURIPolitica.TabIndex = 16;
             this.txtURIPolitica.Text = "http://administracionelectronica.gob.es/es/ctt/politicafirma/politica_firma_AGE_v" +
     "1_8.pdf";
@@ -328,21 +340,26 @@
             this.btnFirmarHuella.UseVisualStyleBackColor = true;
             this.btnFirmarHuella.Click += new System.EventHandler(this.btnFirmarHuella_Click);
             // 
-            // rbEnveloping
+            // folderBrowserDialog1
             // 
-            this.rbEnveloping.AutoSize = true;
-            this.rbEnveloping.Location = new System.Drawing.Point(13, 98);
-            this.rbEnveloping.Name = "rbEnveloping";
-            this.rbEnveloping.Size = new System.Drawing.Size(78, 17);
-            this.rbEnveloping.TabIndex = 6;
-            this.rbEnveloping.Text = "Enveloping";
-            this.rbEnveloping.UseVisualStyleBackColor = true;
+            this.folderBrowserDialog1.Description = "Seleccione la carpeta que contiene los documentos PDF";
+            // 
+            // btnFirmaMavisa
+            // 
+            this.btnFirmaMavisa.Location = new System.Drawing.Point(178, 418);
+            this.btnFirmaMavisa.Name = "btnFirmaMavisa";
+            this.btnFirmaMavisa.Size = new System.Drawing.Size(92, 23);
+            this.btnFirmaMavisa.TabIndex = 21;
+            this.btnFirmaMavisa.Text = "Firma masiva";
+            this.btnFirmaMavisa.UseVisualStyleBackColor = true;
+            this.btnFirmaMavisa.Click += new System.EventHandler(this.btnFirmaMavisa_Click);
             // 
             // FrmPrincipal
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(630, 481);
+            this.ClientSize = new System.Drawing.Size(633, 481);
+            this.Controls.Add(this.btnFirmaMavisa);
             this.Controls.Add(this.btnFirmarHuella);
             this.Controls.Add(this.cmbAlgoritmo);
             this.Controls.Add(this.label7);
@@ -407,6 +424,8 @@
         private System.Windows.Forms.ComboBox cmbAlgoritmo;
         private System.Windows.Forms.Button btnFirmarHuella;
         private System.Windows.Forms.RadioButton rbEnveloping;
+        private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+        private System.Windows.Forms.Button btnFirmaMavisa;
     }
 }
 

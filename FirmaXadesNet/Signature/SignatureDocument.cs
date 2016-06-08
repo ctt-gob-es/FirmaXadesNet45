@@ -179,7 +179,7 @@ namespace FirmaXadesNet.Signature
         {
             if (sigDocument == null)
             {
-                throw new Exception("Se necesita un documento de firma válido");
+                throw new ArgumentNullException("sigDocument");
             }
             
             if (sigDocument.Document == null || sigDocument.XadesSignature == null)

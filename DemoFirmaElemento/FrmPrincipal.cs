@@ -22,6 +22,7 @@
 // --------------------------------------------------------------------------------------------------------------------
 
 using FirmaXadesNet;
+using FirmaXadesNet.Crypto;
 using FirmaXadesNet.Signature;
 using FirmaXadesNet.Signature.Parameters;
 using FirmaXadesNet.Utils;
@@ -64,14 +65,16 @@ namespace DemoFirmaElemento
             parametros.SignatureDestination.XPathExpression = "enidoc:documento/enids:firmas/enids:firma/enids:ContenidoFirma/enids:FirmaConCertificado";
             parametros.SignaturePackaging = SignaturePackaging.INTERNALLY_DETACHED;
             parametros.ElementIdToSign = "CONTENT-12ef114d-ac6c-4da3-8caf-50379ed13698";
-            parametros.InputMimeType = "text/xml";
-            parametros.SigningCertificate = CertUtil.SelectCertificate();
+            parametros.InputMimeType = "text/xml";            
 
             SignatureDocument documentoFirma;
 
-            using (FileStream fs = new FileStream(ficheroXml, FileMode.Open))
+            using (parametros.Signer = new Signer(FirmaXadesNet.Utils.CertUtil.SelectCertificate()))
             {
-                documentoFirma = xadesService.Sign(fs, parametros);
+                using (FileStream fs = new FileStream(ficheroXml, FileMode.Open))
+                {
+                    documentoFirma = xadesService.Sign(fs, parametros);
+                }
             }
 
             if (saveFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)

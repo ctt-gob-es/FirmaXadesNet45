@@ -44,7 +44,6 @@ namespace FirmaXadesNet
 
         #region Private variables
 
-        private RSACryptoServiceProvider _rsaKey;
         private Reference _refContent;
         private string _mimeType;
         private string _encoding;
@@ -63,7 +62,7 @@ namespace FirmaXadesNet
         /// <param name="parameters"></param>
         public SignatureDocument Sign(Stream input, SignatureParameters parameters)
         {
-            if (parameters.SigningCertificate == null)
+            if (parameters.Signer == null)
             {
                 throw new Exception("Es necesario un certificado válido para la firma");
             }
@@ -195,7 +194,7 @@ namespace FirmaXadesNet
         /// <param name="parameters"></param>
         public SignatureDocument CounterSign(SignatureDocument sigDocument, SignatureParameters parameters)
         {
-            if (parameters.SigningCertificate == null)
+            if (parameters.Signer == null)
             {
                 throw new Exception("Es necesario un certificado válido para la firma.");
             }
@@ -209,9 +208,7 @@ namespace FirmaXadesNet
             XadesSignedXml counterSignature = new XadesSignedXml(counterSigDocument.Document);
             SetSignatureId(counterSignature);
 
-            SetCryptoServiceProvider(parameters.SigningCertificate);
-
-            counterSignature.SigningKey = _rsaKey;
+            counterSignature.SigningKey = parameters.Signer.SigningKey;
 
             _refContent = new Reference();
             _refContent.Uri = "#" + sigDocument.XadesSignature.SignatureValueId;
@@ -225,8 +222,8 @@ namespace FirmaXadesNet
 
             KeyInfo keyInfo = new KeyInfo();
             keyInfo.Id = "KeyInfoId-" + counterSignature.Signature.Id;
-            keyInfo.AddClause(new KeyInfoX509Data((X509Certificate)parameters.SigningCertificate));
-            keyInfo.AddClause(new RSAKeyValue((RSA)_rsaKey));
+            keyInfo.AddClause(new KeyInfoX509Data((X509Certificate)parameters.Signer.Certificate));
+            keyInfo.AddClause(new RSAKeyValue((RSA)parameters.Signer.SigningKey));
             counterSignature.KeyInfo = keyInfo;
 
             Reference referenceKeyInfo = new Reference();
@@ -263,11 +260,6 @@ namespace FirmaXadesNet
             counterSigDocument.XadesSignature.UnsignedProperties = unsignedProperties;
 
             counterSigDocument.UpdateDocument();
-
-            if (_disposeCryptoProvider && _rsaKey != null)
-            {
-                _rsaKey.Dispose();
-            }
 
             return counterSigDocument;
         }
@@ -684,13 +676,6 @@ namespace FirmaXadesNet
             {
                 throw new Exception("Ha ocurrido un error durante el proceso de firmado", ex);
             }
-            finally
-            {                
-                if (_disposeCryptoProvider && _rsaKey != null)
-                {
-                    _rsaKey.Dispose();
-                }
-            }
         }
 
         #region Información y propiedades de la firma
@@ -712,47 +697,14 @@ namespace FirmaXadesNet
         }
 
 
-        private void SetCryptoServiceProvider(X509Certificate2 certificate)
-        {
-            string providerName = "Microsoft Enhanced RSA and AES Cryptographic Provider";
-            int providerType = 24;
-
-            var key = (RSACryptoServiceProvider)certificate.PrivateKey;
-
-            if (key.CspKeyContainerInfo.ProviderName == "Microsoft Strong Cryptographic Provider" ||
-                key.CspKeyContainerInfo.ProviderName == "Microsoft Enhanced Cryptographic Provider v1.0" ||
-                key.CspKeyContainerInfo.ProviderName == "Microsoft Base Cryptographic Provider v1.0")
-            {
-                Type CspKeyContainerInfo_Type = typeof(CspKeyContainerInfo);
-
-                FieldInfo CspKeyContainerInfo_m_parameters = CspKeyContainerInfo_Type.GetField("m_parameters", BindingFlags.NonPublic | BindingFlags.Instance);
-                CspParameters parameters = (CspParameters)CspKeyContainerInfo_m_parameters.GetValue(key.CspKeyContainerInfo);
-
-                var cspparams = new CspParameters(providerType, providerName, key.CspKeyContainerInfo.KeyContainerName);
-                cspparams.KeyNumber = parameters.KeyNumber;
-                cspparams.Flags = parameters.Flags;
-                _rsaKey = new RSACryptoServiceProvider(cspparams);
-
-                _disposeCryptoProvider = true;
-            }
-            else
-            {
-                _rsaKey = key;
-                _disposeCryptoProvider = false;
-            }
-        }
-
-
         private void AddCertificateInfo(SignatureDocument sigDocument, SignatureParameters parameters)
-        {
-            SetCryptoServiceProvider(parameters.SigningCertificate);
-
-            sigDocument.XadesSignature.SigningKey = _rsaKey;
+        {            
+            sigDocument.XadesSignature.SigningKey = parameters.Signer.SigningKey;
 
             KeyInfo keyInfo = new KeyInfo();
             keyInfo.Id = "KeyInfoId-" + sigDocument.XadesSignature.Signature.Id;
-            keyInfo.AddClause(new KeyInfoX509Data((X509Certificate)parameters.SigningCertificate));
-            keyInfo.AddClause(new RSAKeyValue((RSA)_rsaKey));
+            keyInfo.AddClause(new KeyInfoX509Data((X509Certificate)parameters.Signer.Certificate));
+            keyInfo.AddClause(new RSAKeyValue((RSA)parameters.Signer.SigningKey));
 
             sigDocument.XadesSignature.KeyInfo = keyInfo;
 
@@ -771,9 +723,9 @@ namespace FirmaXadesNet
             Cert cert;
 
             cert = new Cert();
-            cert.IssuerSerial.X509IssuerName = parameters.SigningCertificate.IssuerName.Name;
-            cert.IssuerSerial.X509SerialNumber = parameters.SigningCertificate.GetSerialNumberAsDecimalString();
-            DigestUtil.SetCertDigest(parameters.SigningCertificate.GetRawCertData(), parameters.DigestMethod, cert.CertDigest);
+            cert.IssuerSerial.X509IssuerName = parameters.Signer.Certificate.IssuerName.Name;
+            cert.IssuerSerial.X509SerialNumber = parameters.Signer.Certificate.GetSerialNumberAsDecimalString();
+            DigestUtil.SetCertDigest(parameters.Signer.Certificate.GetRawCertData(), parameters.DigestMethod, cert.CertDigest);
             signedSignatureProperties.SigningCertificate.CertCollection.Add(cert);
 
             if (parameters.SignaturePolicyInfo != null)
