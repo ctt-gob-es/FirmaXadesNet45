@@ -679,17 +679,16 @@ namespace FirmaXadesNet
             try
             {
                 sigDocument.XadesSignature.ComputeSignature();
+
+                XmlElement signatureElement = sigDocument.XadesSignature.GetXml();
+                sigDocument.XadesSignature.LoadXml(signatureElement);
             }
-            catch (Exception exception)
+            catch (Exception ex)
             {
-                throw new Exception("Ha ocurrido durante el proceso de firmado: " + exception.Message);
+                throw new Exception("Ha ocurrido un error durante el proceso de firmado", ex);
             }
             finally
-            {
-                XmlElement signatureElement = sigDocument.XadesSignature.GetXml();
-
-                sigDocument.XadesSignature.LoadXml(signatureElement);
-                
+            {                
                 if (_disposeCryptoProvider && _rsaKey != null)
                 {
                     _rsaKey.Dispose();
