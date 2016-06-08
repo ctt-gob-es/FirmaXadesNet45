@@ -47,7 +47,6 @@ namespace FirmaXadesNet
         private Reference _refContent;
         private string _mimeType;
         private string _encoding;
-        private bool _disposeCryptoProvider;
 
         #endregion
 
