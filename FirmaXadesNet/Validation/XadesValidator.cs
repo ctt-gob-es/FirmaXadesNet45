@@ -39,10 +39,20 @@ namespace FirmaXadesNet.Validation
 
         public ValidationResult Validate(SignatureDocument sigDocument)
         {
+            /* Los elementos que se validan son:
+             * 
+             * 1. Las huellas de las referencias de la firma.
+             * 2. Se comprueba la huella del elemento SignedInfo y se verifica la firma con la clave pública del certificado.
+             * 3. Si la firma contiene un sello de tiempo se comprueba que la huella de la firma coincide con la del sello de tiempo.
+             * 
+             * La validación de perfiles -C, -X, -XL y -A esta fuera del ámbito de este proyecto.
+             */
+            
             ValidationResult result = new ValidationResult();
                        
             try
             {                
+                // Verifica las huellas de las referencias y la firma
                 sigDocument.XadesSignature.CheckXmldsigSignature();
             }
             catch (Exception ex)
