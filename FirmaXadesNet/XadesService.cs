@@ -282,12 +282,8 @@ namespace FirmaXadesNet
         /// <param name="input"></param>
         /// <returns></returns>
         public SignatureDocument[] Load(Stream input)
-        {
-            XmlDocument xmlDocument = new XmlDocument();
-            xmlDocument.PreserveWhitespace = true;
-            xmlDocument.Load(input);
-
-            return Load(xmlDocument);
+        {           
+            return Load(XMLUtil.LoadDocument(input));
         }
 
         /// <summary>
@@ -321,8 +317,9 @@ namespace FirmaXadesNet
             foreach (var signatureNode in signatureNodeList)
             {
                 SignatureDocument sigDocument = new SignatureDocument();
-                sigDocument.Document = xmlDocument;
-                sigDocument.XadesSignature = new XadesSignedXml(xmlDocument);
+                sigDocument.Document = (XmlDocument)xmlDocument.Clone();
+                sigDocument.Document.PreserveWhitespace = true;
+                sigDocument.XadesSignature = new XadesSignedXml(sigDocument.Document);
                 sigDocument.XadesSignature.LoadXml((XmlElement)signatureNode);
 
                 firmas.Add(sigDocument);

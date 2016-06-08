@@ -759,14 +759,21 @@ namespace Microsoft.Xades
                     CryptoConfig.AddAlgorithm(typeof(Microsoft.Xades.RSAPKCS1SHA512SignatureDescription), "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512");
                 }                
             }
-            
-            retVal = this.CheckSignature();
-            
-            
+
+            retVal = this.CheckDigestedReferences();
+
             if (retVal == false)
             {
                 throw new CryptographicException("CheckXmldsigSignature() failed");
-            }
+            }                       
+
+            var key = this.GetPublicKey();
+            retVal = this.CheckSignedInfo(key);
+
+            if (retVal == false)
+            {
+                throw new CryptographicException("CheckXmldsigSignature() failed");
+            }                       
 
             return retVal;
         }
@@ -1772,12 +1779,62 @@ namespace Microsoft.Xades
             }
         }
 
+
+        private AsymmetricAlgorithm GetPublicKey()
+        {
+            Type SignedXml_Type = typeof(SignedXml);
+
+            MethodInfo SignedXml_Type_GetPublicKey = SignedXml_Type.GetMethod("GetPublicKey", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            return SignedXml_Type_GetPublicKey.Invoke(this, null) as AsymmetricAlgorithm;
+        }
+
+
+        private bool CheckDigestedReferences()
+        {
+            Type SignedXml_Type = typeof(SignedXml);
+
+            MethodInfo SignedXml_Type_CheckDigestedReferences = SignedXml_Type.GetMethod("CheckDigestedReferences", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            return Convert.ToBoolean(SignedXml_Type_CheckDigestedReferences.Invoke(this, null));
+        }
+
+       
+        private bool CheckSignedInfo(AsymmetricAlgorithm key)
+        {
+            if (key == null)
+                throw new ArgumentNullException("key");
+
+            SignatureDescription signatureDescription = CryptoConfig.CreateFromName(SignatureMethod) as SignatureDescription;
+            if (signatureDescription == null)
+                throw new CryptographicException("signature description can't be created");
+
+            // Let's see if the key corresponds with the SignatureMethod
+            Type ta = Type.GetType(signatureDescription.KeyAlgorithm);
+            Type tb = key.GetType();
+            if ((ta != tb) && !ta.IsSubclassOf(tb) && !tb.IsSubclassOf(ta))
+                // Signature method key mismatch
+                return false;
+
+            HashAlgorithm hashAlgorithm = signatureDescription.CreateDigest();
+            if (hashAlgorithm == null)
+                throw new CryptographicException("signature description can't be created");
+            
+            /// NECESARIO PARA EL CALCULO CORRECTO
+            byte[] hashval = GetC14NDigest(hashAlgorithm, "ds");
+
+            AsymmetricSignatureDeformatter asymmetricSignatureDeformatter = signatureDescription.CreateDeformatter(key);
+
+            return asymmetricSignatureDeformatter.VerifySignature(hashval, m_signature.SignatureValue);
+        }
+        
+        
         /// <summary>
         /// We won't call System.Security.Cryptography.Xml.SignedXml.GetC14NDigest(), as we want to use our own.
         /// </summary>
         private byte[] GetC14NDigest(HashAlgorithm hash)
         {
-            return null;
+            return null;            
         }
 
         /// <summary>
