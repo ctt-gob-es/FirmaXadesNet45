@@ -25,7 +25,6 @@ using FirmaXadesNet.Utils;
 using Microsoft.Xades;
 using System;
 using System.IO;
-using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Xml;
@@ -72,20 +71,6 @@ namespace FirmaXadesNet.Signature
         #endregion
 
         #region Public methods
-
-        public X509Certificate2 GetSigningCertificate()
-        {
-            CheckSignatureDocument(this);
-            
-            XmlNode keyXml = _xadesSignedXml.KeyInfo.GetXml().GetElementsByTagName("X509Certificate", SignedXml.XmlDsigNamespaceUrl)[0];
-
-            if (keyXml == null)
-            {
-                throw new Exception("No se ha podido obtener el certificado de firma");
-            }
-
-            return new X509Certificate2(Convert.FromBase64String(keyXml.InnerText));
-        }
 
         public byte[] GetDocumentBytes()
         {

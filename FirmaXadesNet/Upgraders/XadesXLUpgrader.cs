@@ -52,7 +52,7 @@ namespace FirmaXadesNet.Upgraders
             UnsignedProperties unsignedProperties = null;
             CertificateValues certificateValues = null;
 
-            X509Certificate2 signingCertificate = signatureDocument.GetSigningCertificate(); 
+            X509Certificate2 signingCertificate = signatureDocument.XadesSignature.GetSigningCertificate();
 
             unsignedProperties = signatureDocument.XadesSignature.UnsignedProperties;
             unsignedProperties.UnsignedSignatureProperties.CompleteCertificateRefs = new CompleteCertificateRefs();

@@ -24,6 +24,7 @@
 using FirmaXadesNet.Signature;
 using FirmaXadesNet.Signature.Parameters;
 using FirmaXadesNet.Utils;
+using FirmaXadesNet.Validation;
 using Microsoft.Xades;
 using System;
 using System.Collections.Generic;
@@ -38,7 +39,7 @@ using System.Xml;
 namespace FirmaXadesNet
 {
 
-    public class XadesService : IDisposable
+    public class XadesService 
     {
 
         #region Private variables
@@ -263,6 +264,11 @@ namespace FirmaXadesNet
 
             counterSigDocument.UpdateDocument();
 
+            if (_disposeCryptoProvider && _rsaKey != null)
+            {
+                _rsaKey.Dispose();
+            }
+
             return counterSigDocument;
         }
 
@@ -327,13 +333,23 @@ namespace FirmaXadesNet
 
         #endregion
 
-        public void Dispose()
+        #region Validación
+
+        /// <summary>
+        /// Realiza la validación de una firma XAdES
+        /// </summary>
+        /// <param name="sigDocument"></param>
+        /// <returns></returns>
+        public ValidationResult Validate(SignatureDocument sigDocument)
         {
-            if (_disposeCryptoProvider && _rsaKey != null)
-            {
-                _rsaKey.Dispose();
-            }
+            SignatureDocument.CheckSignatureDocument(sigDocument);
+            
+            XadesValidator validator = new XadesValidator();
+
+            return validator.Validate(sigDocument);
         }
+
+        #endregion
 
         #endregion
 
@@ -668,6 +684,17 @@ namespace FirmaXadesNet
             {
                 throw new Exception("Ha ocurrido durante el proceso de firmado: " + exception.Message);
             }
+            finally
+            {
+                XmlElement signatureElement = sigDocument.XadesSignature.GetXml();
+
+                sigDocument.XadesSignature.LoadXml(signatureElement);
+                
+                if (_disposeCryptoProvider && _rsaKey != null)
+                {
+                    _rsaKey.Dispose();
+                }
+            }
         }
 
         #region Información y propiedades de la firma
@@ -695,17 +722,6 @@ namespace FirmaXadesNet
             int providerType = 24;
 
             var key = (RSACryptoServiceProvider)certificate.PrivateKey;
-
-            if (_rsaKey != null &&
-                key.CspKeyContainerInfo.UniqueKeyContainerName == _rsaKey.CspKeyContainerInfo.UniqueKeyContainerName)
-            {
-                return;
-            }
-            else if (_rsaKey != null && _disposeCryptoProvider)
-            {
-                _rsaKey.Dispose();
-            }
-
 
             if (key.CspKeyContainerInfo.ProviderName == "Microsoft Strong Cryptographic Provider" ||
                 key.CspKeyContainerInfo.ProviderName == "Microsoft Enhanced Cryptographic Provider v1.0" ||

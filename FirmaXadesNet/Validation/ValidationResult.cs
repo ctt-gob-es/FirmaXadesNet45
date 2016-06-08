@@ -1,7 +1,7 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// FrmSeleccionarFirma.cs
+// ValidationResult.cs
 //
-// FirmaXadesNet - Librería la para generación de firmas XADES
+// FirmaXadesNet - Librería para la generación de firmas XADES
 // Copyright (C) 2016 Dpto. de Nuevas Tecnologías de la Dirección General de Urbanismo del Ayto. de Cartagena
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,39 +21,13 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
-using FirmaXadesNet.Signature;
-using System.Windows.Forms;
 
-namespace TestFirmaXades
+namespace FirmaXadesNet.Validation
 {
-    public partial class FrmSeleccionarFirma : Form
+    public class ValidationResult
     {
-        private SignatureDocument[] _firmas = null;
+        public bool IsValid { get; set; }
 
-        public SignatureDocument FirmaSeleccionada
-        {
-            get
-            {
-                return _firmas[lstFirmas.SelectedIndex];
-            }
-        }
-        
-        public FrmSeleccionarFirma(SignatureDocument[] firmas)
-        {
-            InitializeComponent();
-
-            _firmas = firmas;
-
-            foreach (var firma in firmas)
-            {                
-                string textoFirma = string.Format("{0} - {1}",
-                    firma.XadesSignature.XadesObject.QualifyingProperties.SignedProperties.SignedSignatureProperties.SigningTime,
-                    firma.XadesSignature.GetSigningCertificate().Subject);
-
-                lstFirmas.Items.Add(textoFirma);
-            }
-
-            lstFirmas.SelectedIndex = 0;
-        }
+        public string Message { get; set; }
     }
 }

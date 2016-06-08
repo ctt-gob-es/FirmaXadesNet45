@@ -21,16 +21,16 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/. 
 
 using System;
-using System.IO;
-using System.Globalization;
-using System.Xml;
-using System.Xml.Schema;
-using System.Security.Cryptography;
-using System.Security.Cryptography.Xml;
-using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography.Xml;
+using System.Xml;
+using System.Xml.Schema;
 
 namespace Microsoft.Xades
 {
@@ -716,6 +716,19 @@ namespace Microsoft.Xades
             return retVal;
         }
 
+
+        public X509Certificate2 GetSigningCertificate()
+        {
+            XmlNode keyXml = this.KeyInfo.GetXml().GetElementsByTagName("X509Certificate", SignedXml.XmlDsigNamespaceUrl)[0];
+
+            if (keyXml == null)
+            {
+                throw new Exception("No se ha podido obtener el certificado de firma");
+            }
+
+            return new X509Certificate2(Convert.FromBase64String(keyXml.InnerText));
+        }
+
         #region XadesCheckSignature routines
         /// <summary>
         /// Check the signature of the underlying XMLDSIG signature
@@ -725,12 +738,31 @@ namespace Microsoft.Xades
         {
             bool retVal = false;
 
-            KeyInfo keyInfo = new KeyInfo();
-            X509Certificate xmldsigCert = new X509Certificate(System.Text.Encoding.ASCII.GetBytes(this.KeyInfo.GetXml().InnerText));
-            keyInfo.AddClause(new KeyInfoX509Data(xmldsigCert));
-            this.KeyInfo = keyInfo;
+            if (this.KeyInfo == null)
+            {
+                KeyInfo keyInfo = new KeyInfo();
+                X509Certificate xmldsigCert = GetSigningCertificate();
+                keyInfo.AddClause(new KeyInfoX509Data(xmldsigCert));
+                this.KeyInfo = keyInfo;
+            }
 
+            SignatureDescription description = CryptoConfig.CreateFromName(this.SignedInfo.SignatureMethod) as SignatureDescription;
+
+            if (description == null)
+            {
+                if (this.SignedInfo.SignatureMethod == "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256")
+                {
+                    CryptoConfig.AddAlgorithm(typeof(Microsoft.Xades.RSAPKCS1SHA256SignatureDescription), "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256");
+                }
+                else if (this.SignedInfo.SignatureMethod == "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512")
+                {
+                    CryptoConfig.AddAlgorithm(typeof(Microsoft.Xades.RSAPKCS1SHA512SignatureDescription), "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512");
+                }                
+            }
+            
             retVal = this.CheckSignature();
+            
+            
             if (retVal == false)
             {
                 throw new CryptographicException("CheckXmldsigSignature() failed");
@@ -834,7 +866,7 @@ namespace Microsoft.Xades
             //}
             //string xmldsigCertHash = Convert.ToBase64String(((X509Certificate)keyInfoX509Data.Certificates[0]).GetCertHash());
 
-            X509Certificate xmldsigCert = new X509Certificate(System.Text.Encoding.ASCII.GetBytes(this.KeyInfo.GetXml().InnerText));
+            X509Certificate xmldsigCert = GetSigningCertificate();
             string xmldsigCertHash = Convert.ToBase64String(xmldsigCert.GetCertHash());
 
             CertCollection xadesSigningCertificateCollection = this.XadesObject.QualifyingProperties.SignedProperties.SignedSignatureProperties.SigningCertificate.CertCollection;
@@ -843,6 +875,7 @@ namespace Microsoft.Xades
                 throw new CryptographicException("Certificate not found in SigningCertificate element while doing CheckSameCertificate()");
             }
             string xadesCertHash = Convert.ToBase64String(((Cert)xadesSigningCertificateCollection[0]).CertDigest.DigestValue);
+
 
             if (String.Compare(xmldsigCertHash, xadesCertHash, true, CultureInfo.InvariantCulture) != 0)
             {
@@ -1497,7 +1530,7 @@ namespace Microsoft.Xades
 
         public void FindContentElement()
         {
-            Reference contentRef = GetContentReference(); 
+            Reference contentRef = GetContentReference();
 
             if (!string.IsNullOrEmpty(contentRef.Uri) &&
                 contentRef.Uri.StartsWith("#"))
@@ -1671,7 +1704,7 @@ namespace Microsoft.Xades
                 {
                     string dataObjectId = reference2.Uri.Substring(1);
                     XmlElement dataObjectXml = null;
-                     
+
                     foreach (DataObject dataObject in this.m_signature.ObjectList)
                     {
                         if (dataObjectId == dataObject.Id)
@@ -1704,7 +1737,7 @@ namespace Microsoft.Xades
                         {
                             throw new Exception("No reference target found");
                         }
-                    }                   
+                    }
                 }
                 else
                 {
@@ -1726,7 +1759,7 @@ namespace Microsoft.Xades
                 if (xmlDoc != null)
                 {
                     CanonicalXmlNodeList_Add.Invoke(refList, new object[] { xmlDoc.DocumentElement });
-                }                
+                }
 
                 Reference_UpdateHashValue.Invoke(reference2, new object[] { xmlDoc, refList });
 

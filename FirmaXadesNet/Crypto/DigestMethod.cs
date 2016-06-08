@@ -23,11 +23,7 @@
 
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FirmaXadesNet.Crypto
 {
@@ -86,6 +82,26 @@ namespace FirmaXadesNet.Crypto
         #endregion
 
         #region Public methods
+
+        public static DigestMethod GetByOid(string oid)
+        {
+            if (oid == SHA1.Oid)
+            {
+                return SHA1;
+            }
+            else if (oid == SHA256.Oid)
+            {
+                return SHA256;
+            }
+            else if (oid == SHA512.Oid)
+            {
+                return SHA512;
+            }
+            else
+            {
+                throw new Exception("Unsupported digest method");
+            }
+        }
 
         public HashAlgorithm GetHashAlgorithm()
         {

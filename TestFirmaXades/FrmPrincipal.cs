@@ -28,6 +28,7 @@ using FirmaXadesNet.Signature;
 using FirmaXadesNet.Signature.Parameters;
 using FirmaXadesNet.Upgraders;
 using FirmaXadesNet.Upgraders.Parameters;
+using FirmaXadesNet.Validation;
 using System;
 using System.IO;
 using System.Windows.Forms;
@@ -213,6 +214,13 @@ namespace TestFirmaXades
                     if (frm.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                     {
                         _signatureDocument = frm.FirmaSeleccionada;
+
+                        ValidationResult result = _xadesService.Validate(_signatureDocument);
+
+                        if (!result.IsValid)
+                        {
+                            MessageBox.Show(result.Message, "ERROR VALIDANDO LA FIRMA");
+                        }
                     }
                     else
                     {
