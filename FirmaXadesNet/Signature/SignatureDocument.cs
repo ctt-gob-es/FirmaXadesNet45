@@ -76,7 +76,7 @@ namespace FirmaXadesNet.Signature
         {
             CheckSignatureDocument(this);
 
-            using (MemoryStream ms = new MemoryStream())
+            using (var ms = new MemoryStream())
             {
                 Save(ms);
 
@@ -92,8 +92,7 @@ namespace FirmaXadesNet.Signature
         {
             CheckSignatureDocument(this);
 
-            XmlWriterSettings settings = new XmlWriterSettings();
-            settings.Encoding = new UTF8Encoding();
+            var settings = new XmlWriterSettings {Encoding = new UTF8Encoding()};
             using (var writer = XmlWriter.Create(fileName, settings))
             {
                 this.Document.Save(writer);
@@ -106,8 +105,7 @@ namespace FirmaXadesNet.Signature
         /// <param name="output"></param>
         public void Save(Stream output)
         {
-            XmlWriterSettings settings = new XmlWriterSettings();
-            settings.Encoding = new UTF8Encoding();
+            var settings = new XmlWriterSettings {Encoding = new UTF8Encoding()};
             using (var writer = XmlWriter.Create(output, settings))
             {
                 this.Document.Save(writer);
