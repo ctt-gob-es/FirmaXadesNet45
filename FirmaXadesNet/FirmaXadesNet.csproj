@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Crypto\CryptoConst.cs" />
     <Compile Include="Crypto\DigestMethod.cs" />
     <Compile Include="Crypto\SignatureMethod.cs" />
     <Compile Include="Crypto\Signer.cs" />
