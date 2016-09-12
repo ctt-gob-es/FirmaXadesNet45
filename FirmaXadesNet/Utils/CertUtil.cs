@@ -37,10 +37,15 @@ namespace FirmaXadesNet.Utils
 
         public static X509Chain GetCertChain(X509Certificate2 certificate, X509Certificate2[] certificates = null)
         {
-            X509Chain chain = new X509Chain();
+            var chain = new X509Chain
+            {
+                ChainPolicy =
+                {
+                    RevocationMode = X509RevocationMode.NoCheck,
+                    VerificationFlags = X509VerificationFlags.IgnoreWrongUsage
+                }
+            };
 
-            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-            chain.ChainPolicy.VerificationFlags = X509VerificationFlags.IgnoreWrongUsage;
 
             if (certificates != null)
             {
@@ -66,11 +71,11 @@ namespace FirmaXadesNet.Utils
             try
             {
                 // Open the store of personal certificates.
-                X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
                 store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
 
-                X509Certificate2Collection collection = (X509Certificate2Collection)store.Certificates;
-                X509Certificate2Collection fcollection = (X509Certificate2Collection)collection.Find(X509FindType.FindByTimeValid, DateTime.Now, false);
+                var collection = store.Certificates;
+                var fcollection = collection.Find(X509FindType.FindByTimeValid, DateTime.Now, false);
 
                 if (string.IsNullOrEmpty(message))
                 {
@@ -82,7 +87,7 @@ namespace FirmaXadesNet.Utils
                     title = "Firmar archivo";
                 }
 
-                X509Certificate2Collection scollection = X509Certificate2UI.SelectFromCollection(fcollection, title, message, X509SelectionFlag.SingleSelection);
+                var scollection = X509Certificate2UI.SelectFromCollection(fcollection, title, message, X509SelectionFlag.SingleSelection);
 
                 if (scollection != null && scollection.Count == 1)
                 {
@@ -90,15 +95,15 @@ namespace FirmaXadesNet.Utils
 
                     if (cert.HasPrivateKey == false)
                     {
-                        throw new Exception("El certificado no tiene asociada una clave privada.");
+                        throw new ArgumentException("El certificado no tiene asociada una clave privada.", nameof(cert.PrivateKey));
                     }
                 }
 
                 store.Close();
             }
-            catch (Exception)
+            catch (Exception exc)
             {
-                throw new Exception("No se ha podido obtener la clave privada.");
+                throw new Exception("No se ha podido obtener la clave privada.", exc);
             }
 
             return cert;
