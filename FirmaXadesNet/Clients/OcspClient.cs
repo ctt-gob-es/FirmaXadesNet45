@@ -35,9 +35,9 @@ using System.Net;
 
 namespace FirmaXadesNet.Clients
 {
-    enum CertificateStatus { Good = 0, Revoked = 1, Unknown = 2 };
+    public enum CertificateStatus { Good = 0, Revoked = 1, Unknown = 2 };
 
-    class OcspClient
+    public class OcspClient
     {
         #region Public methods
 

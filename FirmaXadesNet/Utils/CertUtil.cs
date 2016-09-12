@@ -96,9 +96,10 @@ namespace FirmaXadesNet.Utils
 
                 store.Close();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw new Exception("No se ha podido obtener la clave privada.");
+                // Thx @rasputino
+                throw new Exception("No se ha podido obtener la clave privada.", ex);
             }
 
             return cert;
