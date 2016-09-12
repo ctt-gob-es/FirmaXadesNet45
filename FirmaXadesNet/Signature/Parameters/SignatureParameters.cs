@@ -24,7 +24,6 @@
 using FirmaXadesNet.Crypto;
 using System;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
 
 namespace FirmaXadesNet.Signature.Parameters
 {
@@ -54,6 +53,8 @@ namespace FirmaXadesNet.Signature.Parameters
         public DigestMethod DigestMethod { get; set; }
 
         public DateTime? SigningDate { get; set; }
+
+        public SignerRole SignerRole { get; set; }
 
         public List<SignatureXPathExpression> XPathTransformations { get; private set; }
 

@@ -21,19 +21,12 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
 using FirmaXadesNet;
-using System.IO;
-using FirmaXadesNet.Signature;
-using FirmaXadesNet.Signature.Parameters;
 using FirmaXadesNet.Crypto;
+using FirmaXadesNet.Signature.Parameters;
+using System;
+using System.IO;
+using System.Windows.Forms;
 
 namespace DemoFacturae
 {
@@ -57,6 +50,8 @@ namespace DemoFacturae
             parametros.SignaturePolicyInfo.PolicyHash = "Ohixl6upD6av8N7pEvDABhEL6hM=";
             parametros.SignaturePackaging = SignaturePackaging.ENVELOPED;
             parametros.InputMimeType = "text/xml";
+            parametros.SignerRole = new SignerRole();
+            parametros.SignerRole.ClaimedRoles.Add("emisor");
 
             using (parametros.Signer = new Signer(FirmaXadesNet.Utils.CertUtil.SelectCertificate()))
             {

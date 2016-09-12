@@ -20,9 +20,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/. 
 
-using System;
 using System.Xml;
-using System.Security.Cryptography;
 
 namespace Microsoft.Xades
 {
@@ -34,6 +32,7 @@ namespace Microsoft.Xades
 	{
 		#region Private variables
 		private XmlElement anyXmlElement;
+		private string innerText;
 		#endregion
 
 		#region Public properties
@@ -49,6 +48,19 @@ namespace Microsoft.Xades
 			set
 			{
 				this.anyXmlElement = value;
+			}
+		}
+
+		public string InnerText
+		{
+			get
+			{
+				return this.innerText;
+			}
+
+			set
+			{
+				this.innerText = value;
 			}
 		}
 		#endregion
@@ -76,6 +88,11 @@ namespace Microsoft.Xades
 				retVal = true;
 			}
 
+            if (!string.IsNullOrEmpty(this.innerText))
+            {
+                retVal = true;
+            }
+
 			return retVal;
 		}
 
@@ -86,6 +103,7 @@ namespace Microsoft.Xades
 		public void LoadXml(System.Xml.XmlElement xmlElement)
 		{
 			this.anyXmlElement = xmlElement;
+            this.innerText = xmlElement.InnerText;
 		}
 
 		/// <summary>
@@ -98,7 +116,12 @@ namespace Microsoft.Xades
 			XmlElement retVal;
 
 			creationXmlDocument = new XmlDocument();
-			retVal = creationXmlDocument.CreateElement("ClaimedRole", XadesSignedXml.XadesNamespaceUri);
+			retVal = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "ClaimedRole", XadesSignedXml.XadesNamespaceUri);
+
+			if (!string.IsNullOrEmpty(this.innerText))
+			{
+				retVal.InnerText = this.innerText;
+			}
 
 			if (this.anyXmlElement != null)
 			{

@@ -29,7 +29,6 @@ using Microsoft.Xades;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
@@ -762,6 +761,22 @@ namespace FirmaXadesNet
                 newDataObjectFormat.ObjectReferenceAttribute = "#" + _refContent.Id;
 
                 signedDataObjectProperties.DataObjectFormatCollection.Add(newDataObjectFormat);
+            }
+
+            if (parameters.SignerRole != null &&
+                (parameters.SignerRole.CertifiedRoles.Count > 0 || parameters.SignerRole.ClaimedRoles.Count > 0))
+            {
+                signedSignatureProperties.SignerRole = new Microsoft.Xades.SignerRole();
+
+                foreach (X509Certificate certifiedRole in parameters.SignerRole.CertifiedRoles)
+                {
+                    signedSignatureProperties.SignerRole.CertifiedRoles.CertifiedRoleCollection.Add(new CertifiedRole() { PkiData = certifiedRole.GetRawCertData() });
+                }
+
+                foreach (string claimedRole in parameters.SignerRole.ClaimedRoles)
+                {
+                    signedSignatureProperties.SignerRole.ClaimedRoles.ClaimedRoleCollection.Add(new ClaimedRole() { InnerText = claimedRole });
+                }
             }
 
         }

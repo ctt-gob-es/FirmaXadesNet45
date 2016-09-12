@@ -21,9 +21,8 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/. 
 
 using System;
-using System.Xml;
-using System.Security.Cryptography;
 using System.Collections;
+using System.Xml;
 
 namespace Microsoft.Xades
 {
@@ -140,7 +139,7 @@ namespace Microsoft.Xades
 			XmlElement retVal;
 
 			creationXmlDocument = new XmlDocument();
-			retVal = creationXmlDocument.CreateElement("ClaimedRoles", XadesSignedXml.XadesNamespaceUri);
+			retVal = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "ClaimedRoles", XadesSignedXml.XadesNamespaceUri);
 
 			if (this.claimedRoleCollection.Count > 0)
 			{
