@@ -737,7 +737,7 @@ namespace FirmaXadesNet
                 if (!string.IsNullOrEmpty(parameters.SignaturePolicyInfo.PolicyUri))
                 {
                     SigPolicyQualifier spq = new SigPolicyQualifier();
-                    spq.AnyXmlElement = sigDocument.Document.CreateElement("SPURI", XadesSignedXml.XadesNamespaceUri);
+                    spq.AnyXmlElement = sigDocument.Document.CreateElement(XadesSignedXml.XmlXadesPrefix, "SPURI", XadesSignedXml.XadesNamespaceUri);
                     spq.AnyXmlElement.InnerText = parameters.SignaturePolicyInfo.PolicyUri;
 
                     signedSignatureProperties.SignaturePolicyIdentifier.SignaturePolicyId.SigPolicyQualifiers.SigPolicyQualifierCollection.Add(spq);

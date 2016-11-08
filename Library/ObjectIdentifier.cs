@@ -200,7 +200,7 @@ namespace Microsoft.Xades
 			XmlElement bufferXmlElement;
 
 			creationXmlDocument = new XmlDocument();
-			retVal = creationXmlDocument.CreateElement(tagName, XadesSignedXml.XadesNamespaceUri);
+            retVal = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, tagName, XadesSignedXml.XadesNamespaceUri);
 
 			if (this.identifier != null && this.identifier.HasChanged())
 			{
@@ -211,7 +211,7 @@ namespace Microsoft.Xades
 				throw new CryptographicException("Identifier element missing in OjectIdentifier");
 			}
 
-            bufferXmlElement = creationXmlDocument.CreateElement("Description", XadesSignedXml.XadesNamespaceUri);
+            bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "Description", XadesSignedXml.XadesNamespaceUri);
             bufferXmlElement.InnerText = this.description;
             retVal.AppendChild(bufferXmlElement);
 

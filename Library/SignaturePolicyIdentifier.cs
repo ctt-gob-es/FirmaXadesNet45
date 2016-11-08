@@ -164,11 +164,11 @@ namespace Microsoft.Xades
 			XmlElement bufferXmlElement;
 
 			creationXmlDocument = new XmlDocument();
-			retVal = creationXmlDocument.CreateElement("SignaturePolicyIdentifier", XadesSignedXml.XadesNamespaceUri);
+			retVal = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "SignaturePolicyIdentifier", XadesSignedXml.XadesNamespaceUri);
 
 			if (this.signaturePolicyImplied)
 			{ //Append empty element as required
-				bufferXmlElement = creationXmlDocument.CreateElement("SignaturePolicyImplied", XadesSignedXml.XadesNamespaceUri);
+				bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "SignaturePolicyImplied", XadesSignedXml.XadesNamespaceUri);
 				retVal.AppendChild(bufferXmlElement);
 			}
 			else

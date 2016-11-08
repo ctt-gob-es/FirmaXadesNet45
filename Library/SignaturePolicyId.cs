@@ -216,7 +216,7 @@ namespace Microsoft.Xades
 			XmlElement retVal;
 
 			creationXmlDocument = new XmlDocument();
-			retVal = creationXmlDocument.CreateElement("SignaturePolicyId", XadesSignedXml.XadesNamespaceUri);
+			retVal = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "SignaturePolicyId", XadesSignedXml.XadesNamespaceUri);
 
 			if (this.sigPolicyId != null && this.sigPolicyId.HasChanged())
 			{
