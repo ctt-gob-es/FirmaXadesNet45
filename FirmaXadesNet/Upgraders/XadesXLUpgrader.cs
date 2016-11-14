@@ -28,9 +28,12 @@ using FirmaXadesNet.Utils;
 using Microsoft.Xades;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Ocsp;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Cms;
 using Org.BouncyCastle.Ocsp;
 using Org.BouncyCastle.Tsp;
 using Org.BouncyCastle.X509;
+using Org.BouncyCastle.X509.Extension;
 using Org.BouncyCastle.X509.Store;
 using System;
 using System.Collections;
@@ -44,11 +47,11 @@ namespace FirmaXadesNet.Upgraders
 {
     class XadesXLUpgrader : IXadesUpgrader
     {
-              
+
         #region Public methods
 
         public void Upgrade(SignatureDocument signatureDocument, UpgradeParameters parameters)
-        {               
+        {
             UnsignedProperties unsignedProperties = null;
             CertificateValues certificateValues = null;
 
@@ -83,35 +86,15 @@ namespace FirmaXadesNet.Upgraders
 
         #region Private methods
 
-        private string RevertIssuerName(string issuer)
-        {
-            string[] tokens = issuer.Split(',');
-            string result = "";
-
-            for (int i = tokens.Length - 1; i >= 0; i--)
-            {
-                if (!string.IsNullOrEmpty(result))
-                {
-                    result += ",";
-                }
-
-                result += tokens[i];
-            }
-
-            return result;
-        }
-
-
         private string GetResponderName(ResponderID responderId, ref bool byKey)
         {
-            Org.BouncyCastle.Asn1.DerTaggedObject dt = (Org.BouncyCastle.Asn1.DerTaggedObject)responderId.ToAsn1Object();
+            DerTaggedObject dt = (DerTaggedObject)responderId.ToAsn1Object();
 
             if (dt.TagNo == 1)
             {
-                Org.BouncyCastle.Asn1.X509.X509Name name = Org.BouncyCastle.Asn1.X509.X509Name.GetInstance(dt.GetObject());
                 byKey = false;
 
-                return name.ToString();
+                return new X500DistinguishedName(dt.GetObject().GetEncoded()).Name;                
             }
             else if (dt.TagNo == 2)
             {
@@ -128,6 +111,17 @@ namespace FirmaXadesNet.Upgraders
         }
 
         /// <summary>
+        /// Comprueba si dos DN son equivalentes
+        /// </summary>
+        /// <param name="dn"></param>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        private bool EquivalentDN(X500DistinguishedName dn, X500DistinguishedName other)
+        {
+            return X509Name.GetInstance(Asn1Object.FromByteArray(dn.RawData)).Equivalent(X509Name.GetInstance(Asn1Object.FromByteArray(other.RawData)));
+        }
+
+        /// <summary>
         /// Determina si un certificado ya ha sido añadido a la colección de certificados
         /// </summary>
         /// <param name="cert"></param>
@@ -139,7 +133,7 @@ namespace FirmaXadesNet.Upgraders
             {
                 X509Certificate2 certItem = new X509Certificate2(item.PkiData);
 
-                if (certItem.SubjectName.Equals(cert.SubjectName))
+                if (certItem.Thumbprint == cert.Thumbprint)
                 {
                     return true;
                 }
@@ -197,9 +191,9 @@ namespace FirmaXadesNet.Upgraders
 
                     if (ocspCerts != null)
                     {
-                        X509Certificate2 startOcspCert = DetermineStartCert(new List<X509Certificate2>(ocspCerts));
+                        X509Certificate2 startOcspCert = DetermineStartCert(ocspCerts);
 
-                        if (startOcspCert.IssuerName.Name != enumerator.Current.Certificate.SubjectName.Name)
+                        if (!EquivalentDN(startOcspCert.IssuerName, enumerator.Current.Certificate.SubjectName))
                         {
                             var chainOcsp = CertUtil.GetCertChain(startOcspCert, ocspCerts);
 
@@ -214,9 +208,9 @@ namespace FirmaXadesNet.Upgraders
 
         private bool ExistsCRL(CRLRefCollection collection, string issuer)
         {
-            foreach (CRLRef clrRef in collection)
+            foreach (CRLRef crlRef in collection)
             {
-                if (clrRef.CRLIdentifier.Issuer == issuer)
+                if (crlRef.CRLIdentifier.Issuer == issuer)
                 {
                     return true;
                 }
@@ -227,11 +221,11 @@ namespace FirmaXadesNet.Upgraders
 
         private long? GetCRLNumber(Org.BouncyCastle.X509.X509Crl crlEntry)
         {
-            Asn1OctetString extValue = crlEntry.GetExtensionValue(Org.BouncyCastle.Asn1.X509.X509Extensions.CrlNumber);
+            Asn1OctetString extValue = crlEntry.GetExtensionValue(X509Extensions.CrlNumber);
 
             if (extValue != null)
             {
-                Asn1Object asn1Value = Org.BouncyCastle.X509.Extension.X509ExtensionUtilities.FromExtensionValue(extValue);
+                Asn1Object asn1Value = X509ExtensionUtilities.FromExtensionValue(extValue);
 
                 return DerInteger.GetInstance(asn1Value).PositiveValue.LongValue;
             }
@@ -239,7 +233,7 @@ namespace FirmaXadesNet.Upgraders
             return null;
         }
 
-        private bool ValidateCertificateByCRL(UnsignedProperties unsignedProperties, X509Certificate2 certificate, X509Certificate2 issuer, 
+        private bool ValidateCertificateByCRL(UnsignedProperties unsignedProperties, X509Certificate2 certificate, X509Certificate2 issuer,
             IEnumerable<X509Crl> crlList, FirmaXadesNet.Crypto.DigestMethod digestMethod)
         {
             Org.BouncyCastle.X509.X509Certificate clientCert = certificate.ToBouncyX509Certificate();
@@ -290,7 +284,7 @@ namespace FirmaXadesNet.Upgraders
             return false;
         }
 
-        private X509Certificate2[] ValidateCertificateByOCSP(UnsignedProperties unsignedProperties, X509Certificate2 client, X509Certificate2 issuer, 
+        private X509Certificate2[] ValidateCertificateByOCSP(UnsignedProperties unsignedProperties, X509Certificate2 client, X509Certificate2 issuer,
             IEnumerable<string> ocspServers, FirmaXadesNet.Crypto.DigestMethod digestMethod)
         {
             bool byKey = false;
@@ -333,18 +327,9 @@ namespace FirmaXadesNet.Upgraders
                     ocspRef.OCSPIdentifier.UriAttribute = "#OcspValue" + guidOcsp;
                     DigestUtil.SetCertDigest(rEncoded, digestMethod, ocspRef.CertDigest);
 
-                    Org.BouncyCastle.Asn1.Ocsp.ResponderID rpId = or.ResponderId.ToAsn1Object();
-                    string name = GetResponderName(rpId, ref byKey);
-
-                    if (!byKey)
-                    {
-                        ocspRef.OCSPIdentifier.ResponderID = RevertIssuerName(name);
-                    }
-                    else
-                    {
-                        ocspRef.OCSPIdentifier.ResponderID = name;
-                        ocspRef.OCSPIdentifier.ByKey = true;
-                    }
+                    ResponderID rpId = or.ResponderId.ToAsn1Object();
+                    ocspRef.OCSPIdentifier.ResponderID = GetResponderName(rpId, ref byKey);
+                    ocspRef.OCSPIdentifier.ByKey = byKey;
 
                     ocspRef.OCSPIdentifier.ProducedAt = or.ProducedAt.ToLocalTime();
                     unsignedProperties.UnsignedSignatureProperties.CompleteRevocationRefs.OCSPRefs.OCSPRefCollection.Add(ocspRef);
@@ -362,19 +347,19 @@ namespace FirmaXadesNet.Upgraders
             throw new Exception("El certificado no ha podido ser validado");
         }
 
-        private X509Certificate2 DetermineStartCert(IList<X509Certificate2> certs)
+        private X509Certificate2 DetermineStartCert(X509Certificate2[] certs)
         {
             X509Certificate2 currentCert = null;
             bool isIssuer = true;
 
-            for (int i = 0; i < certs.Count && isIssuer; i++)
+            for (int i = 0; i < certs.Length && isIssuer; i++)
             {
                 currentCert = certs[i];
                 isIssuer = false;
 
-                for (int j = 0; j < certs.Count; j++)
+                for (int j = 0; j < certs.Length; j++)
                 {
-                    if (certs[j].IssuerName.Name == currentCert.SubjectName.Name)
+                    if (EquivalentDN(certs[j].IssuerName, currentCert.SubjectName))
                     {
                         isIssuer = true;
                         break;
@@ -391,7 +376,7 @@ namespace FirmaXadesNet.Upgraders
         /// <param name="unsignedProperties"></param>
         private void AddTSACertificates(UnsignedProperties unsignedProperties, IEnumerable<string> ocspServers, IEnumerable<X509Crl> crlList, FirmaXadesNet.Crypto.DigestMethod digestMethod)
         {
-            TimeStampToken token = new TimeStampToken(new Org.BouncyCastle.Cms.CmsSignedData(unsignedProperties.UnsignedSignatureProperties.SignatureTimeStampCollection[0].EncapsulatedTimeStamp.PkiData));
+            TimeStampToken token = new TimeStampToken(new CmsSignedData(unsignedProperties.UnsignedSignatureProperties.SignatureTimeStampCollection[0].EncapsulatedTimeStamp.PkiData));
             IX509Store store = token.GetCertificates("Collection");
 
             Org.BouncyCastle.Cms.SignerID signerId = token.SignerID;
@@ -403,7 +388,7 @@ namespace FirmaXadesNet.Upgraders
                 tsaCerts.Add(cert);
             }
 
-            X509Certificate2 startCert = DetermineStartCert(tsaCerts);
+            X509Certificate2 startCert = DetermineStartCert(tsaCerts.ToArray());
             AddCertificate(startCert, unsignedProperties, true, ocspServers, crlList, digestMethod, tsaCerts.ToArray());
         }
 
