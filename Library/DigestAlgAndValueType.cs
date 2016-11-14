@@ -188,7 +188,7 @@ namespace Microsoft.Xades
 			if (this.digestValue != null && this.digestValue.Length > 0)
 			{
 				//bufferXmlElement = creationXmlDocument.CreateElement("DigestValue", XadesSignedXml.XadesNamespaceUri);
-                bufferXmlElement = creationXmlDocument.CreateElement("DigestValue", SignedXml.XmlDsigNamespaceUrl);
+                bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlDSigPrefix, "DigestValue", SignedXml.XmlDsigNamespaceUrl);
                 bufferXmlElement.SetAttribute("xmlns:xades", XadesSignedXml.XadesNamespaceUri);
                 
 				bufferXmlElement.InnerText = Convert.ToBase64String(this.digestValue);

@@ -147,12 +147,12 @@ namespace Microsoft.Xades
 			retVal = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "IssuerSerial", XadesSignedXml.XadesNamespaceUri);
             retVal.SetAttribute("xmlns:ds", SignedXml.XmlDsigNamespaceUrl);
 
-			bufferXmlElement = creationXmlDocument.CreateElement("X509IssuerName", SignedXml.XmlDsigNamespaceUrl);
+			bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlDSigPrefix, "X509IssuerName", SignedXml.XmlDsigNamespaceUrl);
             bufferXmlElement.SetAttribute("xmlns:xades", XadesSignedXml.XadesNamespaceUri);
 			bufferXmlElement.InnerText = this.x509IssuerName;
 			retVal.AppendChild(bufferXmlElement);
 
-			bufferXmlElement = creationXmlDocument.CreateElement("X509SerialNumber", SignedXml.XmlDsigNamespaceUrl);
+			bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlDSigPrefix, "X509SerialNumber", SignedXml.XmlDsigNamespaceUrl);
             bufferXmlElement.SetAttribute("xmlns:xades", XadesSignedXml.XadesNamespaceUri);
 			bufferXmlElement.InnerText = this.x509SerialNumber;
 
