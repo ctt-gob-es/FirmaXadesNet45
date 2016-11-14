@@ -39,6 +39,12 @@ namespace FirmaXadesNet.Clients
 
     public class OcspClient
     {
+        #region Private variables
+
+        private Asn1OctetString _nonceAsn1OctetString;
+
+        #endregion 
+
         #region Public methods
 
         /// <summary>
@@ -119,12 +125,18 @@ namespace FirmaXadesNet.Clients
             {
                 BasicOcspResp or = (BasicOcspResp)r.GetResponseObject();
 
+                if (or.GetExtensionValue(OcspObjectIdentifiers.PkixOcspNonce).ToString() !=
+                    _nonceAsn1OctetString.ToString())
+                {
+                    throw new Exception("Bad nonce value");
+                }                               
+                
                 if (or.Responses.Length == 1)
                 {
                     SingleResp resp = or.Responses[0];
 
                     object certificateStatus = resp.GetCertStatus();
-
+                                        
                     if (certificateStatus == Org.BouncyCastle.Ocsp.CertificateStatus.Good)
                     {
                         cStatus = CertificateStatus.Good;
@@ -218,16 +230,14 @@ namespace FirmaXadesNet.Clients
 
             ocspRequestGenerator.AddRequest(id);
 
-            BigInteger nonce = BigInteger.ValueOf(new DateTime().Ticks);
-
             ArrayList oids = new ArrayList();
             Hashtable values = new Hashtable();
 
-            oids.Add(OcspObjectIdentifiers.PkixOcsp);
+            oids.Add(OcspObjectIdentifiers.PkixOcspNonce);
 
-            Asn1OctetString asn1 = new DerOctetString(new DerOctetString(new byte[] { 1, 3, 6, 1, 5, 5, 7, 48, 1, 1 }));
+            _nonceAsn1OctetString = new DerOctetString(new DerOctetString(BigInteger.ValueOf(DateTime.Now.Ticks).ToByteArray()));
 
-            values.Add(OcspObjectIdentifiers.PkixOcsp, new X509Extension(false, asn1));
+            values.Add(OcspObjectIdentifiers.PkixOcspNonce, new X509Extension(false, _nonceAsn1OctetString));
             ocspRequestGenerator.SetRequestExtensions(new X509Extensions(oids, values));
 
             return ocspRequestGenerator.Generate();
