@@ -138,7 +138,7 @@ namespace Microsoft.Xades
 			XmlElement retVal;
 
 			creationXmlDocument = new XmlDocument();
-			retVal = creationXmlDocument.CreateElement("CommitmentTypeQualifiers", XadesSignedXml.XadesNamespaceUri);
+			retVal = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "CommitmentTypeQualifiers", XadesSignedXml.XadesNamespaceUri);
 
 			if (this.commitmentTypeQualifierCollection.Count > 0)
 			{

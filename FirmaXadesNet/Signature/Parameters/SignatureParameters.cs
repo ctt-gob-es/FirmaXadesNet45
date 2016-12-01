@@ -56,6 +56,10 @@ namespace FirmaXadesNet.Signature.Parameters
 
         public SignerRole SignerRole { get; set; }
 
+        public List<SignatureCommitment> SignatureCommitments { get; private set; }
+
+        public SignatureProductionPlace SignatureProductionPlace { get; set; }
+
         public List<SignatureXPathExpression> XPathTransformations { get; private set; }
 
         public SignaturePolicyInfo SignaturePolicyInfo { get; set; }
@@ -77,6 +81,7 @@ namespace FirmaXadesNet.Signature.Parameters
         public SignatureParameters()
         {
             this.XPathTransformations = new List<SignatureXPathExpression>();
+            this.SignatureCommitments = new List<SignatureCommitment>();
             this.SignatureMethod = _defaultSignatureMethod;
             this.DigestMethod = _defaultDigestMethod;
         }

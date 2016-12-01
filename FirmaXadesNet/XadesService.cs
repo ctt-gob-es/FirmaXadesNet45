@@ -779,6 +779,31 @@ namespace FirmaXadesNet
                 }
             }
 
+            foreach (SignatureCommitment signatureCommitment in parameters.SignatureCommitments)
+            {
+                CommitmentTypeIndication cti = new CommitmentTypeIndication();
+                cti.CommitmentTypeId.Identifier.IdentifierUri = signatureCommitment.CommitmentType.URI;
+                cti.AllSignedDataObjects = true;
+
+                foreach (XmlElement signatureCommitmentQualifier in signatureCommitment.CommitmentTypeQualifiers)
+                {
+                    CommitmentTypeQualifier ctq = new CommitmentTypeQualifier();
+                    ctq.AnyXmlElement = signatureCommitmentQualifier;
+
+                    cti.CommitmentTypeQualifiers.CommitmentTypeQualifierCollection.Add(ctq);
+                }
+
+                signedDataObjectProperties.CommitmentTypeIndicationCollection.Add(cti);
+            }
+
+            if (parameters.SignatureProductionPlace != null)
+            {
+                signedSignatureProperties.SignatureProductionPlace.City = parameters.SignatureProductionPlace.City;
+                signedSignatureProperties.SignatureProductionPlace.StateOrProvince = parameters.SignatureProductionPlace.StateOrProvince;
+                signedSignatureProperties.SignatureProductionPlace.PostalCode = parameters.SignatureProductionPlace.PostalCode;
+                signedSignatureProperties.SignatureProductionPlace.CountryName = parameters.SignatureProductionPlace.CountryName;
+            }
+
         }
 
         #endregion

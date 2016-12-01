@@ -50,6 +50,9 @@
     <Compile Include="Crypto\DigestMethod.cs" />
     <Compile Include="Crypto\SignatureMethod.cs" />
     <Compile Include="Crypto\Signer.cs" />
+    <Compile Include="Signature\Parameters\SignatureCommitment.cs" />
+    <Compile Include="Signature\Parameters\SignatureCommitmentType.cs" />
+    <Compile Include="Signature\Parameters\SignatureProductionPlace.cs" />
     <Compile Include="Signature\Parameters\SignerRole.cs" />
     <Compile Include="Upgraders\XadesUpgraderService.cs" />
     <Compile Include="Validation\ValidationResult.cs" />

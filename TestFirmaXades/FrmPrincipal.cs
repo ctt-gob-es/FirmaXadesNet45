@@ -94,6 +94,10 @@ namespace TestFirmaXades
             parametros.SignatureMethod = ObtenerAlgoritmo();
             parametros.SigningDate = DateTime.Now;
 
+            // Test SignatureCommitment
+            var sc = new SignatureCommitment(SignatureCommitmentType.ProofOfOrigin);            
+            parametros.SignatureCommitments.Add(sc);
+
             return parametros;
         }
 

@@ -250,7 +250,7 @@ namespace Microsoft.Xades
 			XmlElement bufferXmlElement;
 
 			creationXmlDocument = new XmlDocument();
-			retVal = creationXmlDocument.CreateElement("CommitmentTypeIndication", XadesSignedXml.XadesNamespaceUri);
+            retVal = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "CommitmentTypeIndication", XadesSignedXml.XadesNamespaceUri);
 
 			if (this.commitmentTypeId != null && this.commitmentTypeId.HasChanged())
 			{
@@ -263,7 +263,7 @@ namespace Microsoft.Xades
 
 			if (this.allSignedDataObjects)
 			{ //Add emty element as required
-				bufferXmlElement = creationXmlDocument.CreateElement("AllSignedDataObjects", XadesSignedXml.XadesNamespaceUri);
+				bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "AllSignedDataObjects", XadesSignedXml.XadesNamespaceUri);
 				retVal.AppendChild(bufferXmlElement);
 			}
 			else
