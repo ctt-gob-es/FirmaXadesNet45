@@ -33,10 +33,10 @@ namespace FirmaXadesNet.Upgraders.Parameters
     {
         #region Private variables
 
-        private List<string> _ocspServers;
+        private List<OcspServer> _ocspServers;
 
         private List<X509Crl> _crls;
-        
+
         private DigestMethod _digestMethod;
 
         private TimeStampClient _timeStampClient;
@@ -45,11 +45,13 @@ namespace FirmaXadesNet.Upgraders.Parameters
 
         private DigestMethod _defaultDigestMethod = DigestMethod.SHA1;
 
+        private bool _getOcspUrlFromCertificate;
+
         #endregion
 
         #region Public properties
 
-        public List<string> OCSPServers
+        public List<OcspServer> OCSPServers
         {
             get
             {
@@ -91,16 +93,30 @@ namespace FirmaXadesNet.Upgraders.Parameters
             }
         }
 
+        public bool GetOcspUrlFromCertificate
+        {
+            get
+            {
+                return _getOcspUrlFromCertificate;
+            }
+
+            set
+            {
+                _getOcspUrlFromCertificate = value;
+            }
+        }
+
         #endregion
 
         #region Constructors
 
         public UpgradeParameters()
         {
-            _ocspServers = new List<string>();
+            _ocspServers = new List<OcspServer>();
             _crls = new List<X509Crl>();
             _digestMethod = _defaultDigestMethod;
             _crlParser = new X509CrlParser();
+            _getOcspUrlFromCertificate = true;
         }
 
         #endregion
@@ -108,7 +124,7 @@ namespace FirmaXadesNet.Upgraders.Parameters
         #region Public methods
 
         public void AddCRL(Stream stream)
-        {            
+        {
             var x509crl = _crlParser.ReadCrl(stream);
 
             _crls.Add(x509crl);

@@ -37,6 +37,7 @@
       <HintPath>..\packages\BouncyCastle.1.7.0\lib\Net40-Client\BouncyCastle.Crypto.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Security" />
@@ -46,6 +47,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Upgraders\Parameters\OcspServer.cs" />
+    <Compile Include="Utils\OcspReqGeneratorExtensions.cs" />
     <Compile Include="Crypto\CryptoConst.cs" />
     <Compile Include="Crypto\DigestMethod.cs" />
     <Compile Include="Crypto\SignatureMethod.cs" />

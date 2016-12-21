@@ -173,7 +173,15 @@ namespace TestFirmaXades
                 UpgradeParameters parametros = new UpgradeParameters();
 
                 parametros.TimeStampClient = new TimeStampClient(txtURLSellado.Text);
-                parametros.OCSPServers.Add(txtOCSP.Text);
+                parametros.OCSPServers.Add(new OcspServer(txtOCSP.Text));
+
+                // test con @firma
+                /* parametros.GetOcspUrlFromCertificate = false;
+                OcspServer ocspServer = new OcspServer("https://afirma.redsara.es/servidorOcsp/servidorOCSP");                
+                ocspServer.SetRequestorName(OcspServer.Rfc822Name, "idAplicacion");
+                ocspServer.SignCertificate = CertUtil.SelectCertificate();
+
+                parametros.OCSPServers.Add(ocspServer); */
 
                 XadesUpgraderService upgrader = new XadesUpgraderService();
                 upgrader.Upgrade(_signatureDocument, formato, parametros);

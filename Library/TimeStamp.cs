@@ -247,6 +247,7 @@ namespace Microsoft.Xades
             }
 
             xmlNodeList = xmlElement.SelectNodes("xades:EncapsulatedTimeStamp", xmlNamespaceManager);
+
             if (xmlNodeList.Count != 0)
             {
                 this.encapsulatedTimeStamp = new EncapsulatedPKIData("EncapsulatedTimeStamp");
@@ -255,19 +256,40 @@ namespace Microsoft.Xades
             }
             else
             {
-                xmlNodeList = xmlElement.SelectNodes("xades:XMLTimeStamp", xmlNamespaceManager);
-                if (xmlNodeList.Count != 0)
-                {
-                    this.xmlTimeStamp = new XMLTimeStamp();
-                    this.xmlTimeStamp.LoadXml((XmlElement)xmlNodeList.Item(0));
-                    this.encapsulatedTimeStamp = null;
+                XmlNode nodeEncapsulatedTimeStamp = null;
 
+                foreach (XmlNode node in xmlElement.ChildNodes)
+                {
+                    if (node.Name == "EncapsulatedTimeStamp")
+                    {
+                        nodeEncapsulatedTimeStamp = node;
+                        break;
+                    }
+                }
+
+                if (nodeEncapsulatedTimeStamp != null)
+                {
+                    this.encapsulatedTimeStamp = new EncapsulatedPKIData("EncapsulatedTimeStamp");
+                    this.encapsulatedTimeStamp.LoadXml((XmlElement)nodeEncapsulatedTimeStamp);
+                    this.xmlTimeStamp = null;
                 }
                 else
                 {
-                    throw new CryptographicException("EncapsulatedTimeStamp or XMLTimeStamp missing");
+                    xmlNodeList = xmlElement.SelectNodes("xades:XMLTimeStamp", xmlNamespaceManager);
+                    if (xmlNodeList.Count != 0)
+                    {
+                        this.xmlTimeStamp = new XMLTimeStamp();
+                        this.xmlTimeStamp.LoadXml((XmlElement)xmlNodeList.Item(0));
+                        this.encapsulatedTimeStamp = null;
+
+                    }
+                    else
+                    {
+                        throw new CryptographicException("EncapsulatedTimeStamp or XMLTimeStamp missing");
+                    }
                 }
             }
+
         }
 
         /// <summary>

@@ -21,17 +21,22 @@
 // 
 // --------------------------------------------------------------------------------------------------------------------
 
+using FirmaXadesNet.Utils;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Ocsp;
+using Org.BouncyCastle.Asn1.Pkcs;
 using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Ocsp;
+using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography;
 
 namespace FirmaXadesNet.Clients
 {
@@ -43,7 +48,7 @@ namespace FirmaXadesNet.Clients
 
         private Asn1OctetString _nonceAsn1OctetString;
 
-        #endregion 
+        #endregion
 
         #region Public methods
 
@@ -54,9 +59,10 @@ namespace FirmaXadesNet.Clients
         /// <param name="issuerCert"></param>
         /// <param name="url"></param>
         /// <returns></returns>
-        public byte[] QueryBinary(X509Certificate eeCert, X509Certificate issuerCert, string url)
-        {            
-            OcspReq req = GenerateOcspRequest(issuerCert, eeCert.SerialNumber);
+        public byte[] QueryBinary(X509Certificate eeCert, X509Certificate issuerCert, string url, GeneralName requestorName = null,
+            System.Security.Cryptography.X509Certificates.X509Certificate2 signCertificate = null)
+        {
+            OcspReq req = GenerateOcspRequest(issuerCert, eeCert.SerialNumber, requestorName, signCertificate);
 
             byte[] binaryResp = PostData(url, req.GetEncoded(), "application/ocsp-request", "application/ocsp-response");
 
@@ -117,7 +123,7 @@ namespace FirmaXadesNet.Clients
             {
                 return CertificateStatus.Unknown;
             }
-            
+
             OcspResp r = new OcspResp(binaryResp);
             CertificateStatus cStatus = CertificateStatus.Unknown;
 
@@ -129,14 +135,14 @@ namespace FirmaXadesNet.Clients
                     _nonceAsn1OctetString.ToString())
                 {
                     throw new Exception("Bad nonce value");
-                }                               
-                
+                }
+
                 if (or.Responses.Length == 1)
                 {
                     SingleResp resp = or.Responses[0];
 
                     object certificateStatus = resp.GetCertStatus();
-                                        
+
                     if (certificateStatus == Org.BouncyCastle.Ocsp.CertificateStatus.Good)
                     {
                         cStatus = CertificateStatus.Good;
@@ -181,6 +187,7 @@ namespace FirmaXadesNet.Clients
             request.ContentType = contentType;
             request.ContentLength = data.Length;
             request.Accept = accept;
+
             Stream stream = request.GetRequestStream();
             stream.Write(data, 0, data.Length);
             stream.Close();
@@ -192,9 +199,9 @@ namespace FirmaXadesNet.Clients
                 resp = ms.ToArray();
                 respStream.Close();
             }
-                        
+
             return resp;
-        }       
+        }
 
 
         protected static Asn1Object GetExtensionValue(X509Certificate cert,
@@ -218,17 +225,24 @@ namespace FirmaXadesNet.Clients
         }
 
 
-        private OcspReq GenerateOcspRequest(X509Certificate issuerCert, BigInteger serialNumber)
+        private OcspReq GenerateOcspRequest(X509Certificate issuerCert, BigInteger serialNumber, GeneralName requestorName,
+            System.Security.Cryptography.X509Certificates.X509Certificate2 signCertificate)
         {
             CertificateID id = new CertificateID(CertificateID.HashSha1, issuerCert, serialNumber);
-            return GenerateOcspRequest(id);
+            return GenerateOcspRequest(id, requestorName, signCertificate);
         }
 
-        private OcspReq GenerateOcspRequest(CertificateID id)
+        private OcspReq GenerateOcspRequest(CertificateID id, GeneralName requestorName,
+            System.Security.Cryptography.X509Certificates.X509Certificate2 signCertificate)
         {
             OcspReqGenerator ocspRequestGenerator = new OcspReqGenerator();
 
             ocspRequestGenerator.AddRequest(id);
+
+            if (requestorName != null)
+            {                
+                ocspRequestGenerator.SetRequestorName(requestorName);
+            }
 
             ArrayList oids = new ArrayList();
             Hashtable values = new Hashtable();
@@ -240,7 +254,14 @@ namespace FirmaXadesNet.Clients
             values.Add(OcspObjectIdentifiers.PkixOcspNonce, new X509Extension(false, _nonceAsn1OctetString));
             ocspRequestGenerator.SetRequestExtensions(new X509Extensions(oids, values));
 
-            return ocspRequestGenerator.Generate();
+            if (signCertificate != null)
+            {
+                return ocspRequestGenerator.Generate((RSACryptoServiceProvider)signCertificate.PrivateKey, CertUtil.GetCertChain(signCertificate));
+            }
+            else
+            {
+                return ocspRequestGenerator.Generate();
+            }
         }
 
         #endregion
