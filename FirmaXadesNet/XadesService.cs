@@ -38,14 +38,13 @@ using System.Xml;
 namespace FirmaXadesNet
 {
 
-    public class XadesService 
+    public class XadesService
     {
 
         #region Private variables
 
         private Reference _refContent;
-        private string _mimeType;
-        private string _encoding;
+        private DataObjectFormat _dataFormat;
 
         #endregion
 
@@ -71,36 +70,76 @@ namespace FirmaXadesNet
             }
 
             SignatureDocument signatureDocument = new SignatureDocument();
+            _dataFormat = new DataObjectFormat();
 
             switch (parameters.SignaturePackaging)
             {
                 case SignaturePackaging.INTERNALLY_DETACHED:
-                    if (string.IsNullOrEmpty(parameters.InputMimeType))
+                    if (parameters.DataFormat == null || string.IsNullOrEmpty(parameters.DataFormat.MimeType))
                     {
                         throw new NullReferenceException("Se necesita especificar el tipo MIME del elemento a firmar.");
                     }
 
-                    if (!string.IsNullOrEmpty(parameters.ElementIdToSign))
+                    _dataFormat.MimeType = parameters.DataFormat.MimeType;
+
+                    if (parameters.DataFormat.MimeType == "text/xml")
                     {
-                        SetContentInternallyDetached(signatureDocument, XMLUtil.LoadDocument(input), parameters.ElementIdToSign, parameters.InputMimeType);
+                        _dataFormat.Encoding = "UTF-8";
                     }
                     else
                     {
-                        SetContentInternallyDetached(signatureDocument, input, parameters.InputMimeType);
+                        _dataFormat.Encoding = "http://www.w3.org/2000/09/xmldsig#base64";
+                    }
+
+                    if (!string.IsNullOrEmpty(parameters.ElementIdToSign))
+                    {
+                        SetContentInternallyDetached(signatureDocument, XMLUtil.LoadDocument(input), parameters.ElementIdToSign);
+                    }
+                    else
+                    {
+                        SetContentInternallyDetached(signatureDocument, input);
                     }
                     break;
 
+                case SignaturePackaging.HASH_INTERNALLY_DETACHED:
+                    if (parameters.DataFormat == null || string.IsNullOrEmpty(parameters.DataFormat.MimeType))
+                    {
+                        _dataFormat.MimeType = "application/octet-stream";
+                    }
+                    else
+                    {
+                        _dataFormat.MimeType = parameters.DataFormat.MimeType;
+                    }
+                    _dataFormat.Encoding = "http://www.w3.org/2000/09/xmldsig#base64";
+                    SetContentInternallyDetachedHashed(signatureDocument, input);
+                    break;
+
                 case SignaturePackaging.ENVELOPED:
+                    _dataFormat.MimeType = "text/xml";
+                    _dataFormat.Encoding = "UTF-8";
                     SetContentEnveloped(signatureDocument, XMLUtil.LoadDocument(input));
                     break;
 
                 case SignaturePackaging.ENVELOPING:
+                    _dataFormat.MimeType = "text/xml";
+                    _dataFormat.Encoding = "UTF-8";
                     SetContentEveloping(signatureDocument, XMLUtil.LoadDocument(input));
                     break;
 
                 case SignaturePackaging.EXTERNALLY_DETACHED:
                     SetContentExternallyDetached(signatureDocument, parameters.ExternalContentUri);
                     break;
+            }
+
+            if (parameters.DataFormat != null)
+            {
+                if (!string.IsNullOrEmpty(parameters.DataFormat.TypeIdentifier))
+                {
+                    _dataFormat.ObjectIdentifier = new ObjectIdentifier();
+                    _dataFormat.ObjectIdentifier.Identifier.IdentifierUri = parameters.DataFormat.TypeIdentifier;
+                }
+
+                _dataFormat.Description = parameters.DataFormat.Description;
             }
 
             SetSignatureId(signatureDocument.XadesSignature);
@@ -130,15 +169,22 @@ namespace FirmaXadesNet
                 throw new Exception("No se ha podido encontrar la referencia del contenido firmado.");
             }
 
-            _mimeType = string.Empty;
-            _encoding = string.Empty;
+            _dataFormat = null;
 
             foreach (DataObjectFormat dof in sigDocument.XadesSignature.XadesObject.QualifyingProperties.SignedProperties.SignedDataObjectProperties.DataObjectFormatCollection)
             {
                 if (dof.ObjectReferenceAttribute == ("#" + _refContent.Id))
                 {
-                    _mimeType = dof.MimeType;
-                    _encoding = dof.Encoding;
+                    _dataFormat = new DataObjectFormat();
+                    _dataFormat.Encoding = dof.Encoding;
+                    _dataFormat.MimeType = dof.MimeType;
+
+                    if (dof.ObjectIdentifier != null)
+                    {
+                        _dataFormat.ObjectIdentifier = new ObjectIdentifier();
+                        _dataFormat.ObjectIdentifier.Identifier.IdentifierUri = dof.ObjectIdentifier.Identifier.IdentifierUri;
+                    }
+
                     break;
                 }
             }
@@ -215,8 +261,9 @@ namespace FirmaXadesNet
             _refContent.AddTransform(new XmlDsigC14NTransform());
             counterSignature.AddReference(_refContent);
 
-            _mimeType = "text/xml";
-            _encoding = "UTF-8";
+            _dataFormat = new DataObjectFormat();
+            _dataFormat.MimeType = "text/xml";
+            _dataFormat.Encoding = "UTF-8";
 
             KeyInfo keyInfo = new KeyInfo();
             keyInfo.Id = "KeyInfoId-" + counterSignature.Signature.Id;
@@ -272,7 +319,7 @@ namespace FirmaXadesNet
         /// <param name="input"></param>
         /// <returns></returns>
         public SignatureDocument[] Load(Stream input)
-        {           
+        {
             return Load(XMLUtil.LoadDocument(input));
         }
 
@@ -314,7 +361,7 @@ namespace FirmaXadesNet
 
                 firmas.Add(sigDocument);
             }
-            
+
             return firmas.ToArray();
         }
 
@@ -330,7 +377,7 @@ namespace FirmaXadesNet
         public ValidationResult Validate(SignatureDocument sigDocument)
         {
             SignatureDocument.CheckSignatureDocument(sigDocument);
-            
+
             XadesValidator validator = new XadesValidator();
 
             return validator.Validate(sigDocument);
@@ -360,7 +407,7 @@ namespace FirmaXadesNet
         /// <param name="xmlDocument"></param>
         /// <param name="elementId"></param>
         /// <param name="mimeType"></param>
-        private void SetContentInternallyDetached(SignatureDocument sigDocument, XmlDocument xmlDocument, string elementId, string mimeType)
+        private void SetContentInternallyDetached(SignatureDocument sigDocument, XmlDocument xmlDocument, string elementId)
         {
             sigDocument.Document = xmlDocument;
 
@@ -369,21 +416,15 @@ namespace FirmaXadesNet
             _refContent.Uri = "#" + elementId;
             _refContent.Id = "Reference-" + Guid.NewGuid().ToString();
 
-            _mimeType = mimeType;
-
-            if (mimeType == "text/xml")
+            if (_dataFormat.MimeType == "text/xml")
             {
                 XmlDsigC14NTransform transform = new XmlDsigC14NTransform();
                 _refContent.AddTransform(transform);
-
-                _encoding = "UTF-8";
             }
             else
             {
                 XmlDsigBase64Transform transform = new XmlDsigBase64Transform();
                 _refContent.AddTransform(transform);
-
-                _encoding = transform.Algorithm;
             }
 
             sigDocument.XadesSignature = new XadesSignedXml(sigDocument.Document);
@@ -396,7 +437,7 @@ namespace FirmaXadesNet
         /// </summary>
         /// <param name="content"></param>
         /// <param name="mimeType"></param>
-        private void SetContentInternallyDetached(SignatureDocument sigDocument, Stream input, string mimeType)
+        private void SetContentInternallyDetached(SignatureDocument sigDocument, Stream input)
         {
             sigDocument.Document = new XmlDocument();
 
@@ -411,14 +452,10 @@ namespace FirmaXadesNet
             _refContent.Id = "Reference-" + Guid.NewGuid().ToString();
             _refContent.Type = XadesSignedXml.XmlDsigObjectType;
 
-            _mimeType = mimeType;
-
             XmlElement contentElement = sigDocument.Document.CreateElement("CONTENT");
 
-            if (mimeType == "text/xml")
+            if (_dataFormat.MimeType == "text/xml")
             {
-                _encoding = "UTF-8";
-
                 XmlDocument doc = new XmlDocument();
                 doc.PreserveWhitespace = true;
                 doc.Load(input);
@@ -427,36 +464,22 @@ namespace FirmaXadesNet
 
                 XmlDsigC14NTransform transform = new XmlDsigC14NTransform();
                 _refContent.AddTransform(transform);
-
             }
             else
             {
                 XmlDsigBase64Transform transform = new XmlDsigBase64Transform();
                 _refContent.AddTransform(transform);
 
-                _encoding = transform.Algorithm;
-
-                if (mimeType == "hash/sha256")
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    using (SHA256 sha2 = SHA256.Create())
-                    {
-                        contentElement.InnerText = Convert.ToBase64String(sha2.ComputeHash(input));
-                    }
-                }
-                else
-                {
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        input.CopyTo(ms);
-                        contentElement.InnerText = Convert.ToBase64String(ms.ToArray());
-                    }
-                    
+                    input.CopyTo(ms);
+                    contentElement.InnerText = Convert.ToBase64String(ms.ToArray());
                 }
             }
 
             contentElement.SetAttribute("Id", id);
-            contentElement.SetAttribute("MimeType", _mimeType);
-            contentElement.SetAttribute("Encoding", _encoding);
+            contentElement.SetAttribute("MimeType", _dataFormat.MimeType);
+            contentElement.SetAttribute("Encoding", _dataFormat.Encoding);
 
 
             rootElement.AppendChild(contentElement);
@@ -465,6 +488,48 @@ namespace FirmaXadesNet
 
             sigDocument.XadesSignature.AddReference(_refContent);
         }
+
+        /// <summary>
+        /// Inserta un documento para generar una firma internally detached.
+        /// </summary>
+        /// <param name="content"></param>
+        /// <param name="mimeType"></param>
+        private void SetContentInternallyDetachedHashed(SignatureDocument sigDocument, Stream input)
+        {
+            sigDocument.Document = new XmlDocument();
+
+            XmlElement rootElement = sigDocument.Document.CreateElement("DOCFIRMA");
+            sigDocument.Document.AppendChild(rootElement);
+
+            string id = "CONTENT-" + Guid.NewGuid().ToString();
+
+            _refContent = new Reference();
+
+            _refContent.Uri = "#" + id;
+            _refContent.Id = "Reference-" + Guid.NewGuid().ToString();
+            _refContent.Type = XadesSignedXml.XmlDsigObjectType;
+
+            XmlElement contentElement = sigDocument.Document.CreateElement("CONTENT");
+
+            XmlDsigBase64Transform transform = new XmlDsigBase64Transform();
+            _refContent.AddTransform(transform);
+
+            using (SHA256 sha2 = SHA256.Create())
+            {
+                contentElement.InnerText = Convert.ToBase64String(sha2.ComputeHash(input));
+            }
+
+            contentElement.SetAttribute("Id", id);
+            contentElement.SetAttribute("MimeType", _dataFormat.MimeType);
+            contentElement.SetAttribute("Encoding", _dataFormat.Encoding);
+
+            rootElement.AppendChild(contentElement);
+
+            sigDocument.XadesSignature = new XadesSignedXml(sigDocument.Document);
+
+            sigDocument.XadesSignature.AddReference(_refContent);
+        }
+
 
         /// <summary>
         /// Inserta un contenido XML para generar una firma enveloping.
@@ -493,13 +558,10 @@ namespace FirmaXadesNet
 
             _refContent.Id = "Reference-" + Guid.NewGuid().ToString();
             _refContent.Uri = "#" + dataObjectId;
-            _refContent.Type = XadesSignedXml.XmlDsigObjectType; 
+            _refContent.Type = XadesSignedXml.XmlDsigObjectType;
 
             XmlDsigC14NTransform transform = new XmlDsigC14NTransform();
             _refContent.AddTransform(transform);
-
-            _mimeType = "text/xml";
-            _encoding = "UTF-8";
 
             sigDocument.XadesSignature.AddReference(_refContent);
         }
@@ -554,7 +616,8 @@ namespace FirmaXadesNet
 
             if (_refContent.Uri.EndsWith(".xml") || _refContent.Uri.EndsWith(".XML"))
             {
-                _mimeType = "text/xml";
+                _dataFormat.MimeType = "text/xml";
+
                 _refContent.AddTransform(new XmlDsigC14NTransform());
             }
 
@@ -616,8 +679,9 @@ namespace FirmaXadesNet
             _refContent.Id = "Reference-" + Guid.NewGuid().ToString();
             _refContent.Uri = "";
 
-            _mimeType = "text/xml";
-            _encoding = "UTF-8";
+            _dataFormat = new DataObjectFormat();
+            _dataFormat.MimeType = "text/xml";
+            _dataFormat.Encoding = "UTF-8";
 
             for (int i = 0; i < sigDocument.Document.DocumentElement.Attributes.Count; i++)
             {
@@ -696,7 +760,7 @@ namespace FirmaXadesNet
 
 
         private void AddCertificateInfo(SignatureDocument sigDocument, SignatureParameters parameters)
-        {            
+        {
             sigDocument.XadesSignature.SigningKey = parameters.Signer.SigningKey;
 
             KeyInfo keyInfo = new KeyInfo();
@@ -752,13 +816,19 @@ namespace FirmaXadesNet
 
             signedSignatureProperties.SigningTime = parameters.SigningDate.HasValue ? parameters.SigningDate.Value : DateTime.Now;
 
-            if (!string.IsNullOrEmpty(_mimeType))
+            if (_dataFormat != null)
             {
                 DataObjectFormat newDataObjectFormat = new DataObjectFormat();
 
-                newDataObjectFormat.MimeType = _mimeType;
-                newDataObjectFormat.Encoding = _encoding;
+                newDataObjectFormat.MimeType = _dataFormat.MimeType;
+                newDataObjectFormat.Encoding = _dataFormat.Encoding;
+                newDataObjectFormat.Description = _dataFormat.Description;
                 newDataObjectFormat.ObjectReferenceAttribute = "#" + _refContent.Id;
+
+                if (_dataFormat.ObjectIdentifier != null)
+                {
+                    newDataObjectFormat.ObjectIdentifier.Identifier.IdentifierUri = _dataFormat.ObjectIdentifier.Identifier.IdentifierUri;
+                }
 
                 signedDataObjectProperties.DataObjectFormatCollection.Add(newDataObjectFormat);
             }

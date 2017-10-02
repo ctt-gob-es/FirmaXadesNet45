@@ -248,7 +248,7 @@ namespace Microsoft.Xades
 
             if (!String.IsNullOrEmpty(this.description))
 			{
-				bufferXmlElement = creationXmlDocument.CreateElement("Description", XadesSignedXml.XadesNamespaceUri);
+				bufferXmlElement = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, "Description", XadesSignedXml.XadesNamespaceUri);
 				bufferXmlElement.InnerText = this.description;
 				retVal.AppendChild(bufferXmlElement);
 			}

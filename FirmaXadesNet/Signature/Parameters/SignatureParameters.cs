@@ -30,6 +30,7 @@ namespace FirmaXadesNet.Signature.Parameters
     public enum SignaturePackaging
     {
         INTERNALLY_DETACHED,
+        HASH_INTERNALLY_DETACHED,
         EXTERNALLY_DETACHED,
         ENVELOPED,
         ENVELOPING
@@ -68,7 +69,7 @@ namespace FirmaXadesNet.Signature.Parameters
 
         public SignaturePackaging SignaturePackaging { get; set; }
 
-        public string InputMimeType { get; set; }
+        public DataFormat DataFormat { get; set; }
 
         public string ElementIdToSign { get; set; }
 

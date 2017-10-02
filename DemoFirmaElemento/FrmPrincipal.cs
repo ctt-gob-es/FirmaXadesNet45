@@ -65,7 +65,8 @@ namespace DemoFirmaElemento
             parametros.SignatureDestination.XPathExpression = "enidoc:documento/enids:firmas/enids:firma/enids:ContenidoFirma/enids:FirmaConCertificado";
             parametros.SignaturePackaging = SignaturePackaging.INTERNALLY_DETACHED;
             parametros.ElementIdToSign = "CONTENT-12ef114d-ac6c-4da3-8caf-50379ed13698";
-            parametros.InputMimeType = "text/xml";            
+            parametros.DataFormat = new DataFormat();
+            parametros.DataFormat.MimeType = "text/xml";     
 
             SignatureDocument documentoFirma;
 

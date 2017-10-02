@@ -116,7 +116,8 @@ namespace TestFirmaXades
             {
                 parametros.SignaturePolicyInfo = ObtenerPolitica();
                 parametros.SignaturePackaging = SignaturePackaging.INTERNALLY_DETACHED;
-                parametros.InputMimeType = MimeTypeInfo.GetMimeType(txtFichero.Text);
+                parametros.DataFormat = new DataFormat();
+                parametros.DataFormat.MimeType = MimeTypeInfo.GetMimeType(txtFichero.Text);
             }
             else if (rbExternallyDetached.Checked)
             {
@@ -283,8 +284,10 @@ namespace TestFirmaXades
             XadesService xadesService = new XadesService();
 
             SignatureParameters parametros = ObtenerParametrosFirma();
-            parametros.SignaturePackaging = SignaturePackaging.INTERNALLY_DETACHED;
-            parametros.InputMimeType = "hash/sha256";
+            parametros.SignaturePackaging = SignaturePackaging.HASH_INTERNALLY_DETACHED;
+            parametros.DataFormat = new DataFormat();
+            parametros.DataFormat.MimeType = "hash/sha256";
+            parametros.DataFormat.Description = "Hash value encoded in binary format";
 
             using(FileStream fs = new FileStream(txtFichero.Text, FileMode.Open))
             {
@@ -319,7 +322,8 @@ namespace TestFirmaXades
                     SignatureParameters sp = new SignatureParameters();
                     sp.Signer = signer;
                     sp.SignaturePackaging = SignaturePackaging.INTERNALLY_DETACHED;
-                    sp.InputMimeType = "application/pdf";
+                    sp.DataFormat = new DataFormat();
+                    sp.DataFormat.MimeType = "application/pdf";
                     sp.SignatureMethod = ObtenerAlgoritmo();
                     sp.SignaturePolicyInfo = ObtenerPolitica();
 
