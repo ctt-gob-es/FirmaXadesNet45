@@ -178,11 +178,13 @@ namespace FirmaXadesNet
                     _dataFormat = new DataObjectFormat();
                     _dataFormat.Encoding = dof.Encoding;
                     _dataFormat.MimeType = dof.MimeType;
+                    _dataFormat.Description = dof.Description;
 
                     if (dof.ObjectIdentifier != null)
                     {
                         _dataFormat.ObjectIdentifier = new ObjectIdentifier();
                         _dataFormat.ObjectIdentifier.Identifier.IdentifierUri = dof.ObjectIdentifier.Identifier.IdentifierUri;
+                        _dataFormat.ObjectIdentifier.Description = dof.ObjectIdentifier.Description;
                     }
 
                     break;
