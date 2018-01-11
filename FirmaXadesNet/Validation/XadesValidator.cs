@@ -30,6 +30,8 @@ using Org.BouncyCastle.Tsp;
 using Org.BouncyCastle.Utilities;
 using System;
 using System.Collections;
+using System.Security.Cryptography;
+using System.Security.Cryptography.Xml;
 
 namespace FirmaXadesNet.Validation
 {
@@ -73,9 +75,20 @@ namespace FirmaXadesNet.Validation
                 byte[] tsHashValue = token.TimeStampInfo.GetMessageImprintDigest();
                 Crypto.DigestMethod tsDigestMethod = Crypto.DigestMethod.GetByOid(token.TimeStampInfo.HashAlgorithm.ObjectID.Id);
 
+                System.Security.Cryptography.Xml.Transform transform = null;
+
+                if (timeStamp.CanonicalizationMethod != null)
+                {
+                    transform = CryptoConfig.CreateFromName(timeStamp.CanonicalizationMethod.Algorithm) as System.Security.Cryptography.Xml.Transform;
+                }
+                else
+                {
+                    transform = new XmlDsigC14NTransform();
+                }
+
                 ArrayList signatureValueElementXpaths = new ArrayList();
                 signatureValueElementXpaths.Add("ds:SignatureValue");
-                byte[] signatureValueHash = DigestUtil.ComputeHashValue(XMLUtil.ComputeValueOfElementList(sigDocument.XadesSignature, signatureValueElementXpaths), tsDigestMethod);
+                byte[] signatureValueHash = DigestUtil.ComputeHashValue(XMLUtil.ComputeValueOfElementList(sigDocument.XadesSignature, signatureValueElementXpaths, transform), tsDigestMethod);
 
                 if (!Arrays.AreEqual(tsHashValue, signatureValueHash))
                 {
