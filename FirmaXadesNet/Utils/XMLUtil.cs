@@ -63,6 +63,18 @@ namespace FirmaXadesNet.Utils
         /// <returns></returns>
         public static byte[] ComputeValueOfElementList(XadesSignedXml xadesSignedXml, ArrayList elementXpaths)
         {
+            return ComputeValueOfElementList(xadesSignedXml, elementXpaths, new XmlDsigC14NTransform());
+        }
+
+        /// <summary>
+        /// Obtiene el valor canonicalizado de los elementos especificados en elementXpaths
+        /// </summary>
+        /// <param name="xadesSignedXml"></param>
+        /// <param name="elementXpaths"></param>
+        /// <returns></returns>
+        public static byte[] ComputeValueOfElementList(XadesSignedXml xadesSignedXml, ArrayList elementXpaths,
+            System.Security.Cryptography.Xml.Transform transform)
+        {
             XmlDocument xmlDocument;
             XmlNamespaceManager xmlNamespaceManager;
             XmlNodeList searchXmlNodeList;
@@ -97,7 +109,7 @@ namespace FirmaXadesNet.Utils
                             clonedElement.SetAttribute(attr.Name, attr.Value);
                         }
 
-                        byte[] canonicalizedElement = ApplyTransform(clonedElement, new XmlDsigC14NTransform());
+                        byte[] canonicalizedElement = ApplyTransform(clonedElement, transform);
                         msResult.Write(canonicalizedElement, 0, canonicalizedElement.Length);
                     }
                 }
@@ -105,6 +117,7 @@ namespace FirmaXadesNet.Utils
                 return msResult.ToArray();
             }
         }
+
 
         /// <summary>
         /// Carga un documento XML

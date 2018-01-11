@@ -111,6 +111,7 @@
     <Compile Include="AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="CanonicalizationMethod.cs" />
     <Compile Include="Cert.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -40,6 +40,7 @@ namespace Microsoft.Xades
         private HashDataInfoCollection hashDataInfoCollection;
         private EncapsulatedPKIData encapsulatedTimeStamp;
         private XMLTimeStamp xmlTimeStamp;
+        private CanonicalizationMethod canonicalizationMethod;
         private string prefix;
         private string namespaceUri;
         #endregion
@@ -126,6 +127,19 @@ namespace Microsoft.Xades
                 }
             }
         }
+
+        public CanonicalizationMethod CanonicalizationMethod
+        {
+            get
+            {
+                return this.canonicalizationMethod;
+            }
+            set
+            {
+                this.canonicalizationMethod = value;
+            }
+        }
+
         #endregion
 
         #region Constructors
@@ -220,6 +234,7 @@ namespace Microsoft.Xades
 
             xmlNamespaceManager = new XmlNamespaceManager(xmlElement.OwnerDocument.NameTable);
             xmlNamespaceManager.AddNamespace("xades", XadesSignedXml.XadesNamespaceUri);
+            xmlNamespaceManager.AddNamespace("ds", SignedXml.XmlDsigNamespaceUrl);
 
             this.hashDataInfoCollection.Clear();
             xmlNodeList = xmlElement.SelectNodes("xades:HashDataInfo", xmlNamespaceManager);
@@ -244,6 +259,14 @@ namespace Microsoft.Xades
                 {
                     disposable.Dispose();
                 }
+            }
+
+            XmlNode canonicalizationNode = xmlElement.SelectSingleNode("ds:CanonicalizationMethod", xmlNamespaceManager);
+
+            if (canonicalizationNode != null)
+            {
+                this.canonicalizationMethod = new CanonicalizationMethod();
+                this.canonicalizationMethod.LoadXml((XmlElement)canonicalizationNode);
             }
 
             xmlNodeList = xmlElement.SelectNodes("xades:EncapsulatedTimeStamp", xmlNamespaceManager);
@@ -305,7 +328,7 @@ namespace Microsoft.Xades
 
             retVal = creationXmlDocument.CreateElement(this.prefix, this.tagName, this.namespaceUri);
 
-            retVal.SetAttribute("xmlns:ds", SignedXml.XmlDsigNamespaceUrl);
+            //retVal.SetAttribute("xmlns:ds", SignedXml.XmlDsigNamespaceUrl);
 
             retVal.SetAttribute("Id", this.Id);
 
@@ -316,6 +339,10 @@ namespace Microsoft.Xades
 
             //   XmlDsigC14NTransform xmlDsigC14NTransform = new XmlDsigC14NTransform();
 
+            if (this.canonicalizationMethod != null)
+            {
+                retVal.AppendChild(creationXmlDocument.ImportNode(canonicalizationMethod.GetXml(), true));
+            }
 
             if (this.hashDataInfoCollection.Count > 0)
             {
