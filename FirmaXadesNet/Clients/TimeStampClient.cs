@@ -31,7 +31,7 @@ using System.Text;
 
 namespace FirmaXadesNet.Clients
 {
-    public class TimeStampClient
+    public class TimeStampClient : ITimeStampClient
     {
         #region Private variables
         private string _url;

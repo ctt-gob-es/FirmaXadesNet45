@@ -39,7 +39,7 @@ namespace FirmaXadesNet.Upgraders.Parameters
 
         private DigestMethod _digestMethod;
 
-        private TimeStampClient _timeStampClient;
+        private ITimeStampClient _timeStampClient;
 
         private X509CrlParser _crlParser;
 
@@ -80,7 +80,7 @@ namespace FirmaXadesNet.Upgraders.Parameters
             }
         }
 
-        public TimeStampClient TimeStampClient
+        public ITimeStampClient TimeStampClient
         {
             get
             {

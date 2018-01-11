@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Clients\ITimeStampClient.cs" />
     <Compile Include="Signature\Parameters\DataFormat.cs" />
     <Compile Include="Upgraders\Parameters\OcspServer.cs" />
     <Compile Include="Utils\OcspReqGeneratorExtensions.cs" />
