@@ -164,7 +164,6 @@ namespace Microsoft.Xades
 
 			creationXmlDocument = new XmlDocument();
 			retVal = creationXmlDocument.CreateElement(XadesSignedXml.XmlXadesPrefix, this.tagName, XadesSignedXml.XadesNamespaceUri);
-            retVal.SetAttribute("xmlns:ds", SignedXml.XmlDsigNamespaceUrl);
             retVal.SetAttribute("Encoding", "http://uri.etsi.org/01903/v1.2.2#DER");
 
             if (!String.IsNullOrEmpty(this.id))
@@ -174,7 +173,7 @@ namespace Microsoft.Xades
 
 			if (this.pkiData != null && this.pkiData.Length > 0)
 			{
-				retVal.InnerText = Convert.ToBase64String(this.pkiData);
+				retVal.InnerText = Convert.ToBase64String(this.pkiData, Base64FormattingOptions.InsertLineBreaks);
 			}
 
 			return retVal;

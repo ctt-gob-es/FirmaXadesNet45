@@ -475,7 +475,7 @@ namespace FirmaXadesNet
                 using (MemoryStream ms = new MemoryStream())
                 {
                     input.CopyTo(ms);
-                    contentElement.InnerText = Convert.ToBase64String(ms.ToArray());
+                    contentElement.InnerText = Convert.ToBase64String(ms.ToArray(), Base64FormattingOptions.InsertLineBreaks);
                 }
             }
 
