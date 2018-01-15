@@ -146,9 +146,9 @@ namespace FirmaXadesNet
 
             PrepareSignature(signatureDocument, parameters);
 
-            ComputeSignature(signatureDocument);
+            signatureDocument.XadesSignature.ComputeSignature();
 
-            signatureDocument.UpdateDocument();
+            UpdateXadesSignature(signatureDocument);
 
             return signatureDocument;
         }
@@ -225,9 +225,9 @@ namespace FirmaXadesNet
 
             PrepareSignature(coSignatureDocument, parameters);
 
-            ComputeSignature(coSignatureDocument);
+            coSignatureDocument.XadesSignature.ComputeSignature();
 
-            coSignatureDocument.UpdateDocument();
+            UpdateXadesSignature(coSignatureDocument);
 
             return coSignatureDocument;
         }
@@ -306,7 +306,7 @@ namespace FirmaXadesNet
             unsignedProperties.UnsignedSignatureProperties.CounterSignatureCollection.Add(counterSignature);
             counterSigDocument.XadesSignature.UnsignedProperties = unsignedProperties;
 
-            counterSigDocument.UpdateDocument();
+            UpdateXadesSignature(counterSigDocument);
 
             return counterSigDocument;
         }
@@ -727,19 +727,15 @@ namespace FirmaXadesNet
             }
         }
 
-        private void ComputeSignature(SignatureDocument sigDocument)
+        private void UpdateXadesSignature(SignatureDocument sigDocument)
         {
-            try
-            {
-                sigDocument.XadesSignature.ComputeSignature();
+            sigDocument.UpdateDocument();
+            
+            XmlElement signatureElement = (XmlElement)sigDocument.Document.SelectSingleNode("//*[@Id='" + sigDocument.XadesSignature.Signature.Id + "']");
 
-                XmlElement signatureElement = sigDocument.XadesSignature.GetXml();
-                sigDocument.XadesSignature.LoadXml(signatureElement);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Ha ocurrido un error durante el proceso de firmado", ex);
-            }
+            // Hay que recargar la firma para que la validación sea correcta ¿¿??
+            sigDocument.XadesSignature = new XadesSignedXml(sigDocument.Document);
+            sigDocument.XadesSignature.LoadXml(signatureElement);
         }
 
         #region Información y propiedades de la firma
