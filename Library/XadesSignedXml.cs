@@ -737,6 +737,7 @@ namespace Microsoft.Xades
         public virtual bool CheckXmldsigSignature()
         {
             bool retVal = false;
+            IEnumerable<XmlAttribute> namespaces = GetAllNamespaces(GetSignatureElement());
 
             if (this.KeyInfo == null)
             {
@@ -757,7 +758,25 @@ namespace Microsoft.Xades
                 else if (this.SignedInfo.SignatureMethod == "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512")
                 {
                     CryptoConfig.AddAlgorithm(typeof(Microsoft.Xades.RSAPKCS1SHA512SignatureDescription), "http://www.w3.org/2001/04/xmldsig-more#rsa-sha512");
-                }                
+                }
+            }
+
+            foreach (Reference reference in SignedInfo.References)
+            {
+                foreach (System.Security.Cryptography.Xml.Transform transform in reference.TransformChain)
+                {
+                    if (transform.GetType() == typeof(XmlDsigXPathTransform))
+                    {
+                        Type transform_Type = typeof(XmlDsigXPathTransform);
+                        FieldInfo nsm_FieldInfo = transform_Type.GetField("_nsm", BindingFlags.NonPublic | BindingFlags.Instance);
+                        XmlNamespaceManager nsm = (XmlNamespaceManager)nsm_FieldInfo.GetValue(transform);
+
+                        foreach (var ns in namespaces)
+                        {
+                            nsm.AddNamespace(ns.LocalName, ns.Value);
+                        }
+                    }
+                }
             }
 
             retVal = this.CheckDigestedReferences();
@@ -765,7 +784,7 @@ namespace Microsoft.Xades
             if (retVal == false)
             {
                 throw new CryptographicException("CheckXmldsigSignature() failed");
-            }                       
+            }
 
             var key = this.GetPublicKey();
             retVal = this.CheckSignedInfo(key);
@@ -773,7 +792,7 @@ namespace Microsoft.Xades
             if (retVal == false)
             {
                 throw new CryptographicException("CheckXmldsigSignature() failed");
-            }                       
+            }
 
             return retVal;
         }
@@ -1792,14 +1811,41 @@ namespace Microsoft.Xades
 
         private bool CheckDigestedReferences()
         {
-            Type SignedXml_Type = typeof(SignedXml);
+            ArrayList references = m_signature.SignedInfo.References;
 
-            MethodInfo SignedXml_Type_CheckDigestedReferences = SignedXml_Type.GetMethod("CheckDigestedReferences", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assembly System_Security_Assembly = Assembly.Load("System.Security, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+            Type CanonicalXmlNodeList_Type = System_Security_Assembly.GetType("System.Security.Cryptography.Xml.CanonicalXmlNodeList");
+            ConstructorInfo CanonicalXmlNodeList_Constructor = CanonicalXmlNodeList_Type.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new Type[] { }, null);
 
-            return Convert.ToBoolean(SignedXml_Type_CheckDigestedReferences.Invoke(this, null));
+            MethodInfo CanonicalXmlNodeList_Add = CanonicalXmlNodeList_Type.GetMethod("Add", BindingFlags.Public | BindingFlags.Instance);
+            Object refList = CanonicalXmlNodeList_Constructor.Invoke(null);
+
+            CanonicalXmlNodeList_Add.Invoke(refList, new object[] { this.signatureDocument });
+
+            Type Reference_Type = typeof(Reference);
+            MethodInfo Reference_CalculateHashValue = Reference_Type.GetMethod("CalculateHashValue", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            for (int i = 0; i < references.Count; ++i)
+            {
+                Reference digestedReference = (Reference)references[i];
+
+                byte[] calculatedHash = (byte[])Reference_CalculateHashValue.Invoke(digestedReference, new object[] { this.signatureDocument, refList });
+
+                if (calculatedHash.Length != digestedReference.DigestValue.Length)
+                    return false;
+
+                byte[] rgb1 = calculatedHash;
+                byte[] rgb2 = digestedReference.DigestValue;
+                for (int j = 0; j < rgb1.Length; ++j)
+                {
+                    if (rgb1[j] != rgb2[j]) return false;
+                }
+            }
+
+            return true;
         }
 
-       
+
         private bool CheckSignedInfo(AsymmetricAlgorithm key)
         {
             if (key == null)
@@ -1819,7 +1865,7 @@ namespace Microsoft.Xades
             HashAlgorithm hashAlgorithm = signatureDescription.CreateDigest();
             if (hashAlgorithm == null)
                 throw new CryptographicException("signature description can't be created");
-            
+
             /// NECESARIO PARA EL CALCULO CORRECTO
             byte[] hashval = GetC14NDigest(hashAlgorithm, "ds");
 
@@ -1827,14 +1873,14 @@ namespace Microsoft.Xades
 
             return asymmetricSignatureDeformatter.VerifySignature(hashval, m_signature.SignatureValue);
         }
-        
-        
+
+
         /// <summary>
         /// We won't call System.Security.Cryptography.Xml.SignedXml.GetC14NDigest(), as we want to use our own.
         /// </summary>
         private byte[] GetC14NDigest(HashAlgorithm hash)
         {
-            return null;            
+            return null;
         }
 
         /// <summary>
