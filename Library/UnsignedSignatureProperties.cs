@@ -497,8 +497,6 @@ namespace Microsoft.Xades
 			this.archiveTimeStampCollection.Clear();
             xmlNodeList = xmlElement.SelectNodes("xades:ArchiveTimeStamp", xmlNamespaceManager);
 
-            xmlNodeList = xmlElement.SelectNodes("xadesv141:ArchiveTimeStamp", xmlNamespaceManager);
-
             enumerator = xmlNodeList.GetEnumerator();
 			try 
 			{

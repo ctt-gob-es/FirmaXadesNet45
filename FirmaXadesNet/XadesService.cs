@@ -299,14 +299,19 @@ namespace FirmaXadesNet
             counterSignature.AddXadesNamespace = true;
             counterSignature.ComputeSignature();
 
-            counterSigDocument.XadesSignature = new XadesSignedXml(counterSigDocument.Document);
-            counterSigDocument.XadesSignature.LoadXml(sigDocument.XadesSignature.GetXml());
-
-            UnsignedProperties unsignedProperties = counterSigDocument.XadesSignature.UnsignedProperties;
+            UnsignedProperties unsignedProperties = sigDocument.XadesSignature.UnsignedProperties;
             unsignedProperties.UnsignedSignatureProperties.CounterSignatureCollection.Add(counterSignature);
-            counterSigDocument.XadesSignature.UnsignedProperties = unsignedProperties;
+            sigDocument.XadesSignature.UnsignedProperties = unsignedProperties;
 
-            UpdateXadesSignature(counterSigDocument);
+            UpdateXadesSignature(sigDocument);
+
+            counterSigDocument.Document = (XmlDocument)sigDocument.Document.Clone();
+            counterSigDocument.Document.PreserveWhitespace = true;
+
+            XmlElement signatureElement = (XmlElement)sigDocument.Document.SelectSingleNode("//*[@Id='" + counterSignature.Signature.Id + "']");
+
+            counterSigDocument.XadesSignature = new XadesSignedXml(counterSigDocument.Document);
+            counterSigDocument.XadesSignature.LoadXml(signatureElement);
 
             return counterSigDocument;
         }
