@@ -144,7 +144,17 @@ namespace FirmaXadesNet.Signature
 
                     if (xmlUnsingedPropertiesNode != null)
                     {
-                        xmlUnsingedPropertiesNode.InnerXml = _xadesSignedXml.XadesObject.QualifyingProperties.UnsignedProperties.GetXml().InnerXml;
+                        XmlNode xmlUnsingedSignaturePropertiesNode = xmlNode.SelectSingleNode("ds:Object/xades:QualifyingProperties/xades:UnsignedProperties/xades:UnsignedSignatureProperties", nm);
+                        XmlElement xmlUnsignedPropertiesNew = _xadesSignedXml.XadesObject.QualifyingProperties.UnsignedProperties.UnsignedSignatureProperties.GetXml();
+                        foreach (XmlNode childNode in xmlUnsignedPropertiesNew.ChildNodes)
+                        {
+                            if (childNode.Attributes["Id"] != null &&
+                                xmlUnsingedSignaturePropertiesNode.SelectSingleNode("//*[@Id='" + childNode.Attributes["Id"].Value + "']") == null)
+                            {
+                                var newNode = _document.ImportNode(childNode, true);
+                                xmlUnsingedSignaturePropertiesNode.AppendChild(newNode);
+                            }
+                        }
                     }
                     else
                     {
