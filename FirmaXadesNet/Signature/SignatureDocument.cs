@@ -155,6 +155,20 @@ namespace FirmaXadesNet.Signature
                                 xmlUnsingedSignaturePropertiesNode.AppendChild(newNode);
                             }
                         }
+
+                        // Se comprueban las ContraFirmas
+                        if (_xadesSignedXml.XadesObject.QualifyingProperties.UnsignedProperties.UnsignedSignatureProperties.CounterSignatureCollection.Count > 0)
+                        {
+                            foreach (XadesSignedXml counterSign in _xadesSignedXml.XadesObject.QualifyingProperties.UnsignedProperties.UnsignedSignatureProperties.CounterSignatureCollection)
+                            {
+                                if (xmlNode.SelectSingleNode("//*[@Id='" + counterSign.Signature.Id + "']") == null)
+                                {
+                                    XmlNode xmlCounterSignatureNode = _document.CreateElement(XadesSignedXml.XmlXadesPrefix, "CounterSignature", XadesSignedXml.XadesNamespaceUri);
+                                    xmlUnsingedSignaturePropertiesNode.AppendChild(xmlCounterSignatureNode);
+                                    xmlCounterSignatureNode.AppendChild(_document.ImportNode(counterSign.GetXml(), true));
+                                }
+                            }
+                        }
                     }
                     else
                     {
