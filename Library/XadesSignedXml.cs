@@ -164,6 +164,8 @@ namespace Microsoft.Xades
 
 
         public const string XmlDsigObjectType = "http://www.w3.org/2000/09/xmldsig#Object";
+
+        public const string XmlDsigManifestType = "http://www.w3.org/2000/09/xmldsig#Manifest";
         #endregion
 
         #region Private variables
@@ -1762,6 +1764,29 @@ namespace Microsoft.Xades
                         else
                         {
                             throw new Exception("No reference target found");
+                        }
+                    }
+                }
+                else if (reference2.Type == XmlDsigManifestType)
+                {
+                    string manifestId = reference2.Uri.Substring(1);
+
+                    foreach (DataObject dataObject in this.m_signature.ObjectList)
+                    {
+                        XmlNode idAttribute = dataObject.Data[0].Attributes.GetNamedItem("Id");
+                        if (idAttribute != null && 
+                            idAttribute.Value == manifestId)
+                        {
+                            XmlElement dataObjectXml = dataObject.GetXml();
+
+                            SetPrefix(XmlDSigPrefix, dataObjectXml);
+
+                            addSignatureNamespaces = true;
+
+                            xmlDoc = new XmlDocument();
+                            xmlDoc.LoadXml(dataObjectXml.OuterXml);
+
+                            break;
                         }
                     }
                 }

@@ -232,6 +232,7 @@
     <Compile Include="IssuerSerial.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Manifest.cs" />
     <Compile Include="NoticeNumberCollection.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -298,6 +299,7 @@
     <Compile Include="QualifyingProperties.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ReferenceCollection.cs" />
     <Compile Include="RevocationValues.cs">
       <SubType>Code</SubType>
     </Compile>

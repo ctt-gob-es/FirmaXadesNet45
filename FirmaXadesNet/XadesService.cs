@@ -123,7 +123,23 @@ namespace FirmaXadesNet
                 case SignaturePackaging.ENVELOPING:
                     _dataFormat.MimeType = "text/xml";
                     _dataFormat.Encoding = "UTF-8";
-                    SetContentEveloping(signatureDocument, XMLUtil.LoadDocument(input));
+                    XmlDocument inputXml = XMLUtil.LoadDocument(input);
+
+                    if (inputXml.FirstChild.Name == "Manifest" &&
+                        inputXml.FirstChild.NamespaceURI == XadesSignedXml.XmlDsigNamespaceUrl)
+                    {
+                        XmlNode idAttribute = inputXml.FirstChild.Attributes.GetNamedItem("Id");
+                        if (idAttribute == null)
+                        {
+                            throw new Exception("Se requiere un identificador para el objeto manifest");
+                        }
+
+                        SetContentEveloping(signatureDocument, inputXml, idAttribute.Value, XadesSignedXml.XmlDsigManifestType);
+                    }
+                    else
+                    {
+                        SetContentEveloping(signatureDocument, inputXml, null, XadesSignedXml.XmlDsigObjectType);
+                    }
                     break;
 
                 case SignaturePackaging.EXTERNALLY_DETACHED:
@@ -542,7 +558,7 @@ namespace FirmaXadesNet
         /// Inserta un contenido XML para generar una firma enveloping.
         /// </summary>
         /// <param name="xmlDocument"></param>
-        private void SetContentEveloping(SignatureDocument sigDocument, XmlDocument xmlDocument)
+        private void SetContentEveloping(SignatureDocument sigDocument, XmlDocument xmlDocument, string objectId, string refType)
         {
             _refContent = new Reference();
 
@@ -564,8 +580,15 @@ namespace FirmaXadesNet
             sigDocument.XadesSignature.AddObject(dataObject);
 
             _refContent.Id = "Reference-" + Guid.NewGuid().ToString();
-            _refContent.Uri = "#" + dataObjectId;
-            _refContent.Type = XadesSignedXml.XmlDsigObjectType;
+            if (!string.IsNullOrEmpty(objectId))
+            {
+                _refContent.Uri = "#" + objectId;
+            }
+            else
+            {
+                _refContent.Uri = "#" + dataObjectId;
+            }
+            _refContent.Type = refType;
 
             XmlDsigC14NTransform transform = new XmlDsigC14NTransform();
             _refContent.AddTransform(transform);
@@ -735,7 +758,7 @@ namespace FirmaXadesNet
         private void UpdateXadesSignature(SignatureDocument sigDocument)
         {
             sigDocument.UpdateDocument();
-            
+
             XmlElement signatureElement = (XmlElement)sigDocument.Document.SelectSingleNode("//*[@Id='" + sigDocument.XadesSignature.Signature.Id + "']");
 
             // Hay que recargar la firma para que la validación sea correcta ¿¿??

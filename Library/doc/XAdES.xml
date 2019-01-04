@@ -2215,6 +2215,13 @@
             </summary>
             <returns>XML element containing the state of this object</returns>
         </member>
+        <member name="M:Microsoft.Xades.ReferenceCollection.Add(System.Security.Cryptography.Xml.Reference)">
+            <summary>
+            Add typed object to the collection
+            </summary>
+            <param name="objectToAdd">Typed object to be added to collection</param>
+            <returns>The object that has been added to collection</returns>
+        </member>
         <member name="T:Microsoft.Xades.RevocationValues">
             <summary>
             The RevocationValues element is used to hold the values of the
