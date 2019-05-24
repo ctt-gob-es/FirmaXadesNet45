@@ -71,6 +71,13 @@ namespace DemoFirmaManifest
             parametros.SignaturePackaging = SignaturePackaging.ENVELOPING;
             parametros.DataFormat = new DataFormat();
             parametros.DataFormat.MimeType = "text/xml";
+            parametros.SignaturePolicyInfo = new SignaturePolicyInfo
+            {
+                PolicyIdentifier = "rn:oid:2.16.724.1.3.1.1.2.1.8",
+                PolicyDigestAlgorithm = DigestMethod.SHA1,
+                PolicyHash = "VYICYpNOjso9g1mBiXDVxNORpKk=",
+                PolicyUri = "http://administracionelectronica.gob.es/es/ctt/politicafirma/politica_firma_AGE_v1_8.pdf"
+            };
 
             SignatureDocument documentoFirma;
 

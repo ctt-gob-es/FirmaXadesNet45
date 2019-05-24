@@ -1,4 +1,4 @@
-﻿// --------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // XadesService.cs
 //
 // FirmaXadesNet - Librería para la generación de firmas XADES
@@ -159,6 +159,11 @@ namespace FirmaXadesNet
             }
 
             SetSignatureId(signatureDocument.XadesSignature);
+
+            if (signatureDocument.Document == null)
+            {
+                signatureDocument.Document = new XmlDocument();
+            }
 
             PrepareSignature(signatureDocument, parameters);
 
