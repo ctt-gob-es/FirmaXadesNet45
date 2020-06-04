@@ -290,7 +290,7 @@ namespace FirmaXadesNet
 
             KeyInfo keyInfo = new KeyInfo();
             keyInfo.Id = "KeyInfoId-" + counterSignature.Signature.Id;
-            keyInfo.AddClause(new KeyInfoX509Data((X509Certificate)parameters.Signer.Certificate));
+            keyInfo.AddClause(new BouncyKeyInfoData(parameters.Signer.Certificate.ToBouncyX509Certificate()));
             keyInfo.AddClause(new RSAKeyValue((RSA)parameters.Signer.SigningKey));
             counterSignature.KeyInfo = keyInfo;
 
@@ -796,7 +796,7 @@ namespace FirmaXadesNet
 
             KeyInfo keyInfo = new KeyInfo();
             keyInfo.Id = "KeyInfoId-" + sigDocument.XadesSignature.Signature.Id;
-            keyInfo.AddClause(new KeyInfoX509Data((X509Certificate)parameters.Signer.Certificate));
+            keyInfo.AddClause(new BouncyKeyInfoData(parameters.Signer.Certificate.ToBouncyX509Certificate()));
             keyInfo.AddClause(new RSAKeyValue((RSA)parameters.Signer.SigningKey));
 
             sigDocument.XadesSignature.KeyInfo = keyInfo;
@@ -816,7 +816,7 @@ namespace FirmaXadesNet
             Cert cert;
 
             cert = new Cert();
-            cert.IssuerSerial.X509IssuerName = Org.BouncyCastle.Security.DotNetUtilities.FromX509Certificate(parameters.Signer.Certificate).IssuerDN.ToString();
+            cert.IssuerSerial.X509IssuerName = parameters.Signer.Certificate.ToBouncyX509Certificate().IssuerDN.ToString();
             cert.IssuerSerial.X509SerialNumber = parameters.Signer.Certificate.GetSerialNumberAsDecimalString();
             DigestUtil.SetCertDigest(parameters.Signer.Certificate.GetRawCertData(), parameters.DigestMethod, cert.CertDigest);
             signedSignatureProperties.SigningCertificate.CertCollection.Add(cert);

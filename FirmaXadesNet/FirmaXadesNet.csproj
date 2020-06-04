@@ -50,6 +50,7 @@
     <Compile Include="Clients\ITimeStampClient.cs" />
     <Compile Include="Signature\Parameters\DataFormat.cs" />
     <Compile Include="Upgraders\Parameters\OcspServer.cs" />
+    <Compile Include="Utils\BouncyKeyInfoData.cs" />
     <Compile Include="Utils\ManifestUtil.cs" />
     <Compile Include="Utils\OcspReqGeneratorExtensions.cs" />
     <Compile Include="Crypto\CryptoConst.cs" />
