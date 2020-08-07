@@ -95,30 +95,38 @@ namespace FirmaXadesNet.Crypto
 
         private void SetSigningKey(X509Certificate2 certificate)
         {
-            var key = (RSACryptoServiceProvider)certificate.PrivateKey;
-
-            if (key.CspKeyContainerInfo.ProviderName == CryptoConst.MS_STRONG_PROV ||
-                key.CspKeyContainerInfo.ProviderName == CryptoConst.MS_ENHANCED_PROV ||
-                key.CspKeyContainerInfo.ProviderName == CryptoConst.MS_DEF_PROV || 
-                key.CspKeyContainerInfo.ProviderName == CryptoConst.MS_DEF_RSA_SCHANNEL_PROV)
+            try // catch if the PrivateKey is not of RSACryptoServiceProvider type
             {
-                Type CspKeyContainerInfo_Type = typeof(CspKeyContainerInfo);
+                var key = (RSACryptoServiceProvider)certificate.PrivateKey;
 
-                FieldInfo CspKeyContainerInfo_m_parameters = CspKeyContainerInfo_Type.GetField("m_parameters", BindingFlags.NonPublic | BindingFlags.Instance);
-                CspParameters parameters = (CspParameters)CspKeyContainerInfo_m_parameters.GetValue(key.CspKeyContainerInfo);
+                if (key.CspKeyContainerInfo.ProviderName == CryptoConst.MS_STRONG_PROV ||
+                    key.CspKeyContainerInfo.ProviderName == CryptoConst.MS_ENHANCED_PROV ||
+                    key.CspKeyContainerInfo.ProviderName == CryptoConst.MS_DEF_PROV || 
+                    key.CspKeyContainerInfo.ProviderName == CryptoConst.MS_DEF_RSA_SCHANNEL_PROV)
+                {
+                    Type CspKeyContainerInfo_Type = typeof(CspKeyContainerInfo);
 
-                var cspparams = new CspParameters(CryptoConst.PROV_RSA_AES, CryptoConst.MS_ENH_RSA_AES_PROV, key.CspKeyContainerInfo.KeyContainerName);
-                cspparams.KeyNumber = parameters.KeyNumber;
-                cspparams.Flags = parameters.Flags;
-                _signingKey = new RSACryptoServiceProvider(cspparams);
+                    FieldInfo CspKeyContainerInfo_m_parameters = CspKeyContainerInfo_Type.GetField("m_parameters", BindingFlags.NonPublic | BindingFlags.Instance);
+                    CspParameters parameters = (CspParameters)CspKeyContainerInfo_m_parameters.GetValue(key.CspKeyContainerInfo);
 
-                _disposeCryptoProvider = true;
+                    var cspparams = new CspParameters(CryptoConst.PROV_RSA_AES, CryptoConst.MS_ENH_RSA_AES_PROV, key.CspKeyContainerInfo.KeyContainerName);
+                    cspparams.KeyNumber = parameters.KeyNumber;
+                    cspparams.Flags = parameters.Flags;
+                    _signingKey = new RSACryptoServiceProvider(cspparams);
+
+                    _disposeCryptoProvider = true;
+                }
+                else
+                {
+                    _signingKey = key;
+                    _disposeCryptoProvider = false;
+                }
             }
-            else
+            catch (InvalidCastException e)
             {
-                _signingKey = key;
+                _signingKey = certificate.PrivateKey; // set the private key without casting
                 _disposeCryptoProvider = false;
-            }
+            }                
         }
 
         #endregion
